@@ -48,11 +48,20 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-950">
       <section className="mx-auto w-full max-w-3xl">
-        <header className="mb-8">
-          <p className="mb-2 text-sm font-medium text-blue-600">Jimitour</p>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Auckland 여행 지도
-          </h1>
+        <header className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <p className="mb-2 text-sm font-medium text-blue-600">Jimitour</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              New Zealand 여행 지도
+            </h1>
+          </div>
+
+          <Link
+            href="/places/new"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            + 장소 추가
+          </Link>
         </header>
 
         <section aria-labelledby="map-heading" className="mb-12">
