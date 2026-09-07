@@ -10,6 +10,23 @@ type PlaceDetail = Pick<
   "id" | "name" | "category" | "status" | "address" | "rating" | "memo"
 >;
 
+function getCategoryLabel(category: Place["category"]) {
+  switch (category) {
+    case "accommodation":
+      return "🏨 숙박";
+    case "restaurant":
+      return "🍴 맛집";
+    case "attraction":
+      return "📍 가볼 곳";
+    case "cafe":
+      return "☕ 카페";
+    case "shopping":
+      return "🛍 쇼핑";
+    default:
+      return "📌 기타";
+  }
+}
+
 interface PlacePageProps {
   params: Promise<{ id: string }>;
 }
@@ -46,7 +63,7 @@ export default async function PlacePage({ params }: PlacePageProps) {
 
         <dl className="grid gap-x-6 gap-y-5 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm sm:grid-cols-[8rem_1fr]">
           <dt className="font-medium text-zinc-500">Category</dt>
-          <dd>{place.category}</dd>
+          <dd>{getCategoryLabel(place.category)}</dd>
 
           <dt className="font-medium text-zinc-500">Status</dt>
 

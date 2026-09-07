@@ -18,6 +18,23 @@ type PlaceListItem = Pick<
   | "memo"
 >;
 
+function getCategoryLabel(category: Place["category"]) {
+  switch (category) {
+    case "accommodation":
+      return "🏨 숙박";
+    case "restaurant":
+      return "🍴 맛집";
+    case "attraction":
+      return "📍 가볼 곳";
+    case "cafe":
+      return "☕ 카페";
+    case "shopping":
+      return "🛍 쇼핑";
+    default:
+      return "📌 기타";
+  }
+}
+
 export default async function Home() {
   await connection();
 
@@ -68,12 +85,17 @@ export default async function Home() {
                 <h2 className="mb-3 text-xl font-semibold">{place.name}</h2>
                 <dl className="grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
                   <dt className="font-medium text-zinc-500">Category</dt>
-                  <dd>{place.category}</dd>
+                  <dd>{getCategoryLabel(place.category)}</dd>
                   <dt className="font-medium text-zinc-500">Status</dt>
                   <dd>{place.status}</dd>
                   <dt className="font-medium text-zinc-500">Address</dt>
                   <dd>{place.address ?? "주소 없음"}</dd>
                 </dl>
+                {place.memo && (
+                  <p className="mt-4 text-sm leading-relaxed text-zinc-600">
+                    {place.memo}
+                  </p>
+                )}
                 <Link
                   href={`/places/${place.id}`}
                   className="mt-5 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"

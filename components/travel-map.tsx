@@ -21,6 +21,40 @@ type MapPlace = Pick<
   | "memo"
 >;
 
+function getCategoryLabel(category: Place["category"]) {
+  switch (category) {
+    case "accommodation":
+      return "🏨 숙박";
+    case "restaurant":
+      return "🍴 맛집";
+    case "attraction":
+      return "📍 가볼 곳";
+    case "cafe":
+      return "☕ 카페";
+    case "shopping":
+      return "🛍 쇼핑";
+    default:
+      return "📌 기타";
+  }
+}
+
+function getCategoryIcon(category: Place["category"]) {
+  switch (category) {
+    case "accommodation":
+      return "🏨";
+    case "restaurant":
+      return "🍴";
+    case "attraction":
+      return "📍";
+    case "cafe":
+      return "☕";
+    case "shopping":
+      return "🛍";
+    default:
+      return "📌";
+  }
+}
+
 interface TravelMapProps {
   places: MapPlace[];
 }
@@ -35,6 +69,7 @@ function createPopupContent(place: MapPlace) {
   content.appendChild(title);
 
   const details = [
+    ["카테고리", getCategoryLabel(place.category)],
     ["주소", place.address ?? "주소 없음"],
     ["평점", place.rating === null ? "평점 없음" : String(place.rating)],
   ];
@@ -86,7 +121,7 @@ export default function TravelMap({ places }: TravelMapProps) {
       container: mapContainerRef.current,
       style: "https://tiles.openfreemap.org/styles/liberty",
       center: AUCKLAND_CENTER,
-      zoom: 10,
+      zoom: 12,
     });
     mapRef.current = map;
 
@@ -122,7 +157,15 @@ export default function TravelMap({ places }: TravelMapProps) {
           maxWidth: "280px",
         }).setDOMContent(createPopupContent(place));
 
-        return new maplibregl.Marker()
+        const markerElement = document.createElement("div");
+
+        markerElement.textContent = getCategoryIcon(place.category);
+        markerElement.className =
+          "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white text-xl shadow-md";
+
+        return new maplibregl.Marker({
+          element: markerElement,
+        })
           .setLngLat([place.longitude, place.latitude])
           .setPopup(popup)
           .addTo(map);
