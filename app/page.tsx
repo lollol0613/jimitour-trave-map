@@ -15,6 +15,7 @@ type PlaceListItem = Pick<
   | "longitude"
   | "address"
   | "rating"
+  | "memo"
 >;
 
 export default async function Home() {
@@ -23,7 +24,7 @@ export default async function Home() {
   const { data: places, error } = await supabase
     .from("places")
     .select(
-      "id, name, category, status, latitude, longitude, address, rating",
+      "id, name, category, status, latitude, longitude, address, rating, memo",
     )
     .returns<PlaceListItem[]>();
 
@@ -32,7 +33,9 @@ export default async function Home() {
       <section className="mx-auto w-full max-w-3xl">
         <header className="mb-8">
           <p className="mb-2 text-sm font-medium text-blue-600">Jimitour</p>
-          <h1 className="text-3xl font-bold tracking-tight">Auckland 여행 지도</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Auckland 여행 지도
+          </h1>
         </header>
 
         <section aria-labelledby="map-heading" className="mb-12">

@@ -49,7 +49,20 @@ export default async function PlacePage({ params }: PlacePageProps) {
           <dd>{place.category}</dd>
 
           <dt className="font-medium text-zinc-500">Status</dt>
-          <dd>{place.status}</dd>
+
+          <dd>
+            <span
+              className={
+                place.status === "visited"
+                  ? "inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700"
+                  : "inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700"
+              }
+            >
+              {place.status === "visited"
+                ? "🟢 다녀온 곳"
+                : "🟡 가보고 싶은 곳"}
+            </span>
+          </dd>
 
           <dt className="font-medium text-zinc-500">Address</dt>
           <dd>{place.address ?? "주소 없음"}</dd>

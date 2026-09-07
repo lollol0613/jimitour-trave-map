@@ -18,6 +18,7 @@ type MapPlace = Pick<
   | "longitude"
   | "address"
   | "rating"
+  | "memo"
 >;
 
 interface TravelMapProps {
@@ -36,7 +37,6 @@ function createPopupContent(place: MapPlace) {
   const details = [
     ["주소", place.address ?? "주소 없음"],
     ["평점", place.rating === null ? "평점 없음" : String(place.rating)],
-    ["상태", place.status],
   ];
 
   for (const [label, value] of details) {
@@ -47,6 +47,26 @@ function createPopupContent(place: MapPlace) {
     row.append(labelElement, document.createTextNode(value));
     content.appendChild(row);
   }
+
+  if (place.memo) {
+    const memo = document.createElement("p");
+    memo.className =
+      "mt-3 border-t border-zinc-200 pt-3 leading-relaxed text-zinc-600";
+    memo.textContent = place.memo;
+    content.appendChild(memo);
+  }
+
+  const statusBadge = document.createElement("span");
+
+  statusBadge.className =
+    place.status === "visited"
+      ? "mt-3 inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700"
+      : "mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700";
+
+  statusBadge.textContent =
+    place.status === "visited" ? "🟢 다녀온 곳" : "🟡 가보고 싶은 곳";
+
+  content.appendChild(statusBadge);
 
   return content;
 }
@@ -97,8 +117,10 @@ export default function TravelMap({ places }: TravelMapProps) {
           Number.isFinite(place.latitude),
       )
       .map((place) => {
-        const popup = new maplibregl.Popup({ offset: 24, maxWidth: "280px" })
-          .setDOMContent(createPopupContent(place));
+        const popup = new maplibregl.Popup({
+          offset: 24,
+          maxWidth: "280px",
+        }).setDOMContent(createPopupContent(place));
 
         return new maplibregl.Marker()
           .setLngLat([place.longitude, place.latitude])
