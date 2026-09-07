@@ -5,6 +5,8 @@ import TravelMap from "@/components/travel-map";
 import { supabase } from "@/lib/supabase";
 import type { Place } from "@/types/place";
 
+import { getRatingLabel } from "@/lib/rating";
+
 type PlaceListItem = Pick<
   Place,
   | "id"
@@ -95,10 +97,10 @@ export default async function Home() {
                 <dl className="grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
                   <dt className="font-medium text-zinc-500">Category</dt>
                   <dd>{getCategoryLabel(place.category)}</dd>
-                  <dt className="font-medium text-zinc-500">Status</dt>
-                  <dd>{place.status}</dd>
                   <dt className="font-medium text-zinc-500">Address</dt>
                   <dd>{place.address ?? "주소 없음"}</dd>
+                  <dt className="font-medium text-zinc-500">Rating</dt>
+                  <dd>{getRatingLabel(place.rating)}</dd>
                 </dl>
                 {place.memo && (
                   <p className="mt-4 text-sm leading-relaxed text-zinc-600">

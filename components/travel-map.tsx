@@ -5,6 +5,7 @@ import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { Place } from "@/types/place";
+import { getRatingLabel } from "@/lib/rating";
 
 const AUCKLAND_CENTER: [number, number] = [174.7633, -36.8485];
 
@@ -71,7 +72,7 @@ function createPopupContent(place: MapPlace) {
   const details = [
     ["카테고리", getCategoryLabel(place.category)],
     ["주소", place.address ?? "주소 없음"],
-    ["평점", place.rating === null ? "평점 없음" : String(place.rating)],
+    ["평점", getRatingLabel(place.rating)],
   ];
 
   for (const [label, value] of details) {

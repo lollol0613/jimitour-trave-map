@@ -5,6 +5,8 @@ import { getGoogleMapsSearchUrl } from "@/lib/google-maps";
 import { supabase } from "@/lib/supabase";
 import type { Place } from "@/types/place";
 
+import { getRatingLabel } from "@/lib/rating";
+
 type PlaceDetail = Pick<
   Place,
   "id" | "name" | "category" | "status" | "address" | "rating" | "memo"
@@ -85,7 +87,7 @@ export default async function PlacePage({ params }: PlacePageProps) {
           <dd>{place.address ?? "주소 없음"}</dd>
 
           <dt className="font-medium text-zinc-500">Rating</dt>
-          <dd>{place.rating ?? "평점 없음"}</dd>
+          <dd>{getRatingLabel(place.rating)}</dd>
 
           <dt className="font-medium text-zinc-500">Memo</dt>
           <dd className="whitespace-pre-wrap">{place.memo ?? "메모 없음"}</dd>
