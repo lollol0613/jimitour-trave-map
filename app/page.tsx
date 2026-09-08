@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import type { Place } from "@/types/place";
 
 import { getRatingLabel } from "@/lib/rating";
+import PlaceBrowser from "@/components/place-browser";
 
 type PlaceListItem = Pick<
   Place,
@@ -16,6 +17,7 @@ type PlaceListItem = Pick<
   | "latitude"
   | "longitude"
   | "address"
+  | "city"
   | "rating"
   | "memo"
 >;
@@ -43,7 +45,7 @@ export default async function Home() {
   const { data: places, error } = await supabase
     .from("places")
     .select(
-      "id, name, category, status, latitude, longitude, address, rating, memo",
+      "id, name, category, status, latitude, longitude, address, city, rating, memo",
     )
     .returns<PlaceListItem[]>();
 
@@ -70,53 +72,8 @@ export default async function Home() {
           <h2 id="map-heading" className="mb-4 text-xl font-semibold">
             지도
           </h2>
-          <TravelMap places={places ?? []} />
+          <PlaceBrowser places={places ?? []} />
         </section>
-
-        <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
-
-        {error ? (
-          <p
-            role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700"
-          >
-            장소 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-          </p>
-        ) : places.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-white p-5 text-zinc-600">
-            등록된 장소가 없습니다.
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {places.map((place) => (
-              <li
-                key={place.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
-              >
-                <h2 className="mb-3 text-xl font-semibold">{place.name}</h2>
-                <dl className="grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
-                  <dt className="font-medium text-zinc-500">Category</dt>
-                  <dd>{getCategoryLabel(place.category)}</dd>
-                  <dt className="font-medium text-zinc-500">Address</dt>
-                  <dd>{place.address ?? "주소 없음"}</dd>
-                  <dt className="font-medium text-zinc-500">Rating</dt>
-                  <dd>{getRatingLabel(place.rating)}</dd>
-                </dl>
-                {place.memo && (
-                  <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                    {place.memo}
-                  </p>
-                )}
-                <Link
-                  href={`/places/${place.id}`}
-                  className="mt-5 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  상세보기
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
     </main>
   );

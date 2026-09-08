@@ -16,6 +16,7 @@ type PlaceListItem = Pick<
   | "latitude"
   | "longitude"
   | "address"
+  | "city"
   | "rating"
   | "memo"
 >;
@@ -60,13 +61,49 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
   const [selectedCategory, setSelectedCategory] =
     useState<FilterCategory>("all");
 
-  const filteredPlaces =
-    selectedCategory === "all"
-      ? places
-      : places.filter((place) => place.category === selectedCategory);
+  const [selectedCity, setSelectedCity] = useState<string>("all");
+
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+
+  const cities = Array.from(
+    new Set(
+      places
+        .map((place) => place.city)
+        .filter((city): city is string => Boolean(city)),
+    ),
+  ).sort();
+
+  const filteredPlaces = places.filter((place) => {
+    const matchesCategory =
+      selectedCategory === "all" || place.category === selectedCategory;
+
+    const matchesCity = selectedCity === "all" || place.city === selectedCity;
+
+    return matchesCategory && matchesCity;
+  });
 
   return (
     <>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {["all", ...cities].map((city) => {
+          const selected = city === selectedCity;
+
+          return (
+            <button
+              key={city}
+              type="button"
+              onClick={() => setSelectedCity(city)}
+              className={
+                selected
+                  ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+                  : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              }
+            >
+              {city === "all" ? "전체 지역" : city}
+            </button>
+          );
+        })}
+      </div>
       <div className="mb-6 flex flex-wrap gap-2">
         {filters.map((filter) => {
           const selected = filter.value === selectedCategory;
@@ -93,7 +130,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
           지도
         </h2>
 
-        <TravelMap places={filteredPlaces} />
+        <TravelMap places={filteredPlaces} selectedPlaceId={selectedPlaceId} />
       </section>
 
       <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
@@ -107,7 +144,8 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
           {filteredPlaces.map((place) => (
             <li
               key={place.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+              onClick={() => setSelectedPlaceId(place.id)}
+              className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md"
             >
               <h2 className="mb-3 text-xl font-semibold">{place.name}</h2>
 

@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+.maplibregl-popup-close-button {
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  font-size: 20px;
+  line-height: 28px;
+  color: #52525b;
+}
+
+.maplibregl-popup-close-button:hover {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.maplibregl-popup-content {
+  padding: 18px 20px 16px;
+}

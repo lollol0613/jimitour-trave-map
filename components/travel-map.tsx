@@ -58,6 +58,7 @@ function getCategoryIcon(category: Place["category"]) {
 
 interface TravelMapProps {
   places: MapPlace[];
+  selectedPlaceId: string | null;
 }
 
 function createPopupContent(place: MapPlace) {
@@ -107,9 +108,10 @@ function createPopupContent(place: MapPlace) {
   return content;
 }
 
-export default function TravelMap({ places }: TravelMapProps) {
+export default function TravelMap({ places, selectedPlaceId }: TravelMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRefs = useRef<Record<string, maplibregl.Marker>>({});
 
   useEffect(() => {
     if (!mapContainerRef.current) {
@@ -148,9 +150,7 @@ export default function TravelMap({ places }: TravelMapProps) {
     const markers = places
       .filter(
         (place) =>
-          place.category === "accommodation" &&
-          Number.isFinite(place.longitude) &&
-          Number.isFinite(place.latitude),
+          Number.isFinite(place.longitude) && Number.isFinite(place.latitude),
       )
       .map((place) => {
         const popup = new maplibregl.Popup({
@@ -164,18 +164,46 @@ export default function TravelMap({ places }: TravelMapProps) {
         markerElement.className =
           "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white text-xl shadow-md";
 
-        return new maplibregl.Marker({
+        const marker = new maplibregl.Marker({
           element: markerElement,
         })
           .setLngLat([place.longitude, place.latitude])
           .setPopup(popup)
           .addTo(map);
+
+        markerRefs.current[place.id] = marker;
+
+        return marker;
       });
 
     return () => {
       markers.forEach((marker) => marker.remove());
+      markerRefs.current = {};
     };
   }, [places]);
+
+  useEffect(() => {
+    if (!selectedPlaceId) {
+      return;
+    }
+
+    const map = mapRef.current;
+    const marker = markerRefs.current[selectedPlaceId];
+
+    if (!map || !marker) {
+      return;
+    }
+
+    const lngLat = marker.getLngLat();
+
+    map.flyTo({
+      center: [lngLat.lng, lngLat.lat],
+      zoom: 14,
+      essential: true,
+    });
+
+    marker.togglePopup();
+  }, [selectedPlaceId]);
 
   return (
     <div

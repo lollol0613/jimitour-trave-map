@@ -93,14 +93,23 @@ export default async function PlacePage({ params }: PlacePageProps) {
           <dd className="whitespace-pre-wrap">{place.memo ?? "메모 없음"}</dd>
         </dl>
 
-        <a
-          href={googleMapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
-          Google Maps에서 보기
-        </a>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Google Maps에서 보기
+          </a>
+
+          <Link
+            href={`/places/${place.id}/edit`}
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+          >
+            수정
+          </Link>
+        </div>
       </article>
     </main>
   );

@@ -16,6 +16,7 @@ export interface Place {
   latitude: number;
   longitude: number;
   address: string | null;
+  city: string | null;
   rating: number | null;
   memo: string | null;
   created_at: string;
