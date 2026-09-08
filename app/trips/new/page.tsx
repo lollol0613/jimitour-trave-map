@@ -14,8 +14,6 @@ async function createTrip(formData: FormData) {
     .from("trips")
     .insert({
       name,
-      start_date: startDate || null,
-      end_date: endDate || null,
       memo: memo || null,
     })
     .select("id")
@@ -25,7 +23,19 @@ async function createTrip(formData: FormData) {
     throw new Error(error?.message ?? "여행을 만들지 못했습니다.");
   }
 
-  redirect(`/trips/${data.id}`);
+  const tripId = data.id;
+
+  const { error: dayError } = await supabase.from("trip_days").insert({
+    trip_id: tripId,
+    day_number: 1,
+    title: "Day 1",
+  });
+
+  if (dayError) {
+    throw new Error(dayError.message);
+  }
+
+  redirect(`/trips/${tripId}`);
 }
 
 export default function NewTripPage() {
