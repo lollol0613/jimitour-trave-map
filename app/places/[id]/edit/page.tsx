@@ -4,11 +4,65 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getRatingLabel } from "@/lib/rating";
 import type { Place } from "@/types/place";
+import { redirect } from "next/navigation";
 
 interface EditPlacePageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+async function updatePlace(id: string, formData: FormData) {
+  "use server";
+
+  const name = String(formData.get("name") ?? "");
+  const category = String(formData.get("category") ?? "");
+  const city = String(formData.get("city") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const address = String(formData.get("address") ?? "");
+  const memo = String(formData.get("memo") ?? "");
+
+  const latitude = Number(formData.get("latitude"));
+  const longitude = Number(formData.get("longitude"));
+
+  const ratingValue = formData.get("rating");
+  const rating =
+    ratingValue === null || String(ratingValue).trim() === ""
+      ? null
+      : Number(ratingValue);
+
+  const { data, error } = await supabase
+    .from("places")
+    .update({
+      name,
+      category,
+      city: city || null,
+      status,
+      address: address || null,
+      memo: memo || null,
+      latitude,
+      longitude,
+      rating,
+    })
+    .eq("id", id)
+    .select("id, rating");
+
+  console.log("UPDATE RESULT:", {
+    id,
+    rating,
+    data,
+    error,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error("장소가 업데이트되지 않았습니다.");
+  }
+
+  redirect(`/places/${id}`);
 }
 
 export default async function EditPlacePage({ params }: EditPlacePageProps) {
@@ -36,7 +90,10 @@ export default async function EditPlacePage({ params }: EditPlacePageProps) {
 
         <h1 className="mb-8 text-3xl font-bold tracking-tight">장소 수정</h1>
 
-        <form className="space-y-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <form
+          action={updatePlace.bind(null, place.id)}
+          className="space-y-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
+        >
           <div>
             <label className="mb-2 block text-sm font-medium">장소명</label>
             <input

@@ -51,7 +51,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-950">
-      <section className="mx-auto w-full max-w-3xl">
+      <section className="mx-auto w-full max-w-7xl">
         <header className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="mb-2 text-sm font-medium text-blue-600">Jimitour</p>

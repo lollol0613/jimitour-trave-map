@@ -83,99 +83,117 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
   });
 
   return (
-    <>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {["all", ...cities].map((city) => {
-          const selected = city === selectedCity;
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
+      <div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {["all", ...cities].map((city) => {
+            const selected = city === selectedCity;
 
-          return (
-            <button
-              key={city}
-              type="button"
-              onClick={() => setSelectedCity(city)}
-              className={
-                selected
-                  ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                  : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-              }
-            >
-              {city === "all" ? "전체 지역" : city}
-            </button>
-          );
-        })}
-      </div>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {filters.map((filter) => {
-          const selected = filter.value === selectedCategory;
-
-          return (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setSelectedCategory(filter.value)}
-              className={
-                selected
-                  ? "rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-                  : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-              }
-            >
-              {filter.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <section aria-labelledby="map-heading" className="mb-12">
-        <h2 id="map-heading" className="mb-4 text-xl font-semibold">
-          지도
-        </h2>
-
-        <TravelMap places={filteredPlaces} selectedPlaceId={selectedPlaceId} />
-      </section>
-
-      <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
-
-      {filteredPlaces.length === 0 ? (
-        <p className="rounded-xl border border-zinc-200 bg-white p-5 text-zinc-600">
-          해당 카테고리에 등록된 장소가 없습니다.
-        </p>
-      ) : (
-        <ul className="space-y-4">
-          {filteredPlaces.map((place) => (
-            <li
-              key={place.id}
-              onClick={() => setSelectedPlaceId(place.id)}
-              className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md"
-            >
-              <h2 className="mb-3 text-xl font-semibold">{place.name}</h2>
-
-              <dl className="grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
-                <dt className="font-medium text-zinc-500">Category</dt>
-                <dd>{getCategoryLabel(place.category)}</dd>
-
-                <dt className="font-medium text-zinc-500">Address</dt>
-                <dd>{place.address ?? "주소 없음"}</dd>
-
-                <dt className="font-medium text-zinc-500">Rating</dt>
-                <dd>{getRatingLabel(place.rating)}</dd>
-              </dl>
-
-              {place.memo && (
-                <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                  {place.memo}
-                </p>
-              )}
-
-              <Link
-                href={`/places/${place.id}`}
-                className="mt-5 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            return (
+              <button
+                key={city}
+                type="button"
+                onClick={() => setSelectedCity(city)}
+                className={
+                  selected
+                    ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+                    : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                }
               >
-                상세보기
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+                {city === "all" ? "전체 지역" : city}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mb-6 flex flex-wrap gap-2">
+          {filters.map((filter) => {
+            const selected = filter.value === selectedCategory;
+
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setSelectedCategory(filter.value)}
+                className={
+                  selected
+                    ? "rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                    : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                }
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <section aria-labelledby="map-heading">
+          <h2 id="map-heading" className="mb-4 text-xl font-semibold">
+            지도
+          </h2>
+
+          <TravelMap
+            places={filteredPlaces}
+            selectedPlaceId={selectedPlaceId}
+          />
+        </section>
+      </div>
+
+      <aside className="lg:max-h-[620px] lg:overflow-y-auto lg:pr-2">
+        <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
+
+        {filteredPlaces.length === 0 ? (
+          <p className="rounded-xl border border-zinc-200 bg-white p-5 text-zinc-600">
+            해당 조건에 등록된 장소가 없습니다.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {filteredPlaces.map((place) => (
+              <li
+                key={place.id}
+                onClick={() => setSelectedPlaceId(place.id)}
+                className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+              >
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold">{place.name}</h3>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
+                      <span>{getCategoryLabel(place.category)}</span>
+                      <span>·</span>
+                      <span>{getRatingLabel(place.rating)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/places/${place.id}`}
+                      onClick={(event) => event.stopPropagation()}
+                      className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      상세보기
+                    </Link>
+
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        place.address
+                          ? `${place.name}, ${place.address}`
+                          : place.name,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                      className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                    >
+                      Google Maps
+                    </a>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
+    </div>
   );
 }
