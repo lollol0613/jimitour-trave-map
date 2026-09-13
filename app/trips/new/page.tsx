@@ -9,11 +9,13 @@ async function createTrip(formData: FormData) {
   const startDate = String(formData.get("start_date") ?? "");
   const endDate = String(formData.get("end_date") ?? "");
   const memo = String(formData.get("memo") ?? "");
+  const city = String(formData.get("city") ?? "");
 
   const { data, error } = await supabase
     .from("trips")
     .insert({
       name,
+      city: city || null,
       memo: memo || null,
     })
     .select("id")
@@ -64,6 +66,17 @@ export default function NewTripPage() {
               name="name"
               className="w-full rounded-lg border border-zinc-300 px-3 py-2"
               placeholder="예: Rotorua 2박 3일"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">대표 도시</label>
+
+            <input
+              type="text"
+              name="city"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+              placeholder="예: Rotorua"
             />
           </div>
 
