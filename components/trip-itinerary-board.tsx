@@ -6,6 +6,7 @@ import { useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { supabase } from "@/lib/supabase";
 import TripRouteMap from "@/components/trip-route-map";
+import Link from "next/link";
 
 import TripDayBoard, {
   DroppableDay,
@@ -29,6 +30,7 @@ type ItineraryDay = {
 };
 
 interface TripItineraryBoardProps {
+  tripId: string;
   days: ItineraryDay[];
   places: ItineraryPlace[];
 }
@@ -50,6 +52,7 @@ async function saveOrder(updatedItems: ItineraryPlace[]) {
 }
 
 export default function TripItineraryBoard({
+  tripId,
   days,
   places,
 }: TripItineraryBoardProps) {
@@ -183,10 +186,18 @@ export default function TripItineraryBoard({
               itemIds={placesForDay.map((place) => place.id)}
             >
               <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-                <h3 className="text-lg font-semibold">
-                  {day.title ?? `Day ${day.dayNumber}`}
-                </h3>
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="text-lg font-semibold">
+                    {day.title ?? `Day ${day.dayNumber}`}
+                  </h3>
 
+                  <Link
+                    href={`/trips/${tripId}/days/${day.id}/add-place`}
+                    className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                  >
+                    + 장소 추가
+                  </Link>
+                </div>
                 <p className="mt-2 text-sm text-zinc-500">
                   {placesForDay.length}개 장소
                 </p>

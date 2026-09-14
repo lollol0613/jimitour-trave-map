@@ -63,6 +63,48 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
 
   const [selectedCity, setSelectedCity] = useState<string>("all");
 
+  const [selectedIsland, setSelectedIsland] = useState<
+    "all" | "north" | "south"
+  >("all");
+
+  const NORTH_ISLAND_CITIES = [
+    "Auckland",
+    "Cambridge",
+    "Coromandel",
+    "Hamilton",
+    "Karangahake",
+    "Kerikeri",
+    "Matamata",
+    "Muriwai",
+    "New Plymouth",
+    "Ngatea",
+    "Northland",
+    "Paeroa",
+    "Pokeno",
+    "Putaruru",
+    "Rotorua",
+    "Taupo",
+    "Waikato",
+    "Waitomo",
+    "Waiuku",
+    "Wellington",
+    "Whangarei",
+    "Northland",
+  ];
+
+  const SOUTH_ISLAND_CITIES = [
+    "Arrowtown",
+    "Christchurch",
+    "Cromwell",
+    "Lyttelton",
+    "Milford Sound",
+    "Mt.Cook",
+    "Queenstown",
+    "Tekapo",
+    "Twizel",
+    "Wanaka",
+  ];
+
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   const cities = Array.from(
@@ -72,6 +114,18 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
         .filter((city): city is string => Boolean(city)),
     ),
   ).sort();
+
+  const visibleCities = cities.filter((city) => {
+    if (selectedIsland === "all") {
+      return true;
+    }
+
+    if (selectedIsland === "north") {
+      return NORTH_ISLAND_CITIES.includes(city);
+    }
+
+    return SOUTH_ISLAND_CITIES.includes(city);
+  });
 
   const filteredPlaces = places.filter((place) => {
     const matchesCategory =
@@ -85,25 +139,59 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
       <div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {["all", ...cities].map((city) => {
-            const selected = city === selectedCity;
+        <div className="mb-5">
+          <h2 className="mb-3 text-xl font-semibold">지역 선택</h2>
 
-            return (
-              <button
-                key={city}
-                type="button"
-                onClick={() => setSelectedCity(city)}
-                className={
-                  selected
-                    ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                }
-              >
-                {city === "all" ? "전체 지역" : city}
-              </button>
-            );
-          })}
+          <div className="mb-3 flex flex-wrap gap-2">
+            {[
+              { value: "all", label: "All" },
+              { value: "north", label: "North Island" },
+              { value: "south", label: "South Island" },
+            ].map((island) => {
+              const selected = island.value === selectedIsland;
+
+              return (
+                <button
+                  key={island.value}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIsland(
+                      island.value as "all" | "north" | "south",
+                    );
+                    setSelectedCity("all");
+                  }}
+                  className={
+                    selected
+                      ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+                      : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                  }
+                >
+                  {island.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {["all", ...visibleCities].map((city) => {
+              const selected = city === selectedCity;
+
+              return (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => setSelectedCity(city)}
+                  className={
+                    selected
+                      ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                      : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                  }
+                >
+                  {city === "all" ? "All" : city}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2">
@@ -128,18 +216,15 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
         </div>
 
         <section aria-labelledby="map-heading">
-          <h2 id="map-heading" className="mb-4 text-xl font-semibold">
-            지도
-          </h2>
-
           <TravelMap
             places={filteredPlaces}
             selectedPlaceId={selectedPlaceId}
+            selectedCity={selectedCity}
           />
         </section>
       </div>
 
-      <aside className="lg:max-h-[620px] lg:overflow-y-auto lg:pr-2">
+      <aside className="lg:max-h-[680px] lg:overflow-y-auto lg:pr-2">
         <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
 
         {filteredPlaces.length === 0 ? (

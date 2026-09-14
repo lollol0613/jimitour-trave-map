@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import TripItineraryBoard from "@/components/trip-itinerary-board";
+import TripOverviewMap from "@/components/trip-overview-map";
 
 interface TripPageProps {
   params: Promise<{
@@ -117,6 +118,29 @@ export default async function TripPage({ params }: TripPageProps) {
       title: day.title,
     })) ?? [];
 
+  const overviewPlaces =
+    tripPlaces?.flatMap((item) => {
+      const place = Array.isArray(item.places) ? item.places[0] : item.places;
+
+      const day = days?.find((day) => day.id === item.trip_day_id);
+
+      if (!place || !day) {
+        return [];
+      }
+
+      return [
+        {
+          id: item.id,
+          name: place.name,
+          category: place.category,
+          latitude: place.latitude,
+          longitude: place.longitude,
+          dayNumber: day.day_number,
+          position: item.position,
+        },
+      ];
+    }) ?? [];
+
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-950">
       <section className="mx-auto w-full max-w-3xl">
@@ -150,6 +174,10 @@ export default async function TripPage({ params }: TripPageProps) {
           </div>
         </div>
 
+        <div className="mt-6">
+          <TripOverviewMap places={overviewPlaces} />
+        </div>
+
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">일정</h2>
@@ -164,7 +192,11 @@ export default async function TripPage({ params }: TripPageProps) {
             </form>
           </div>
 
-          <TripItineraryBoard days={itineraryDays} places={itineraryPlaces} />
+          <TripItineraryBoard
+            tripId={trip.id}
+            days={itineraryDays}
+            places={itineraryPlaces}
+          />
         </div>
       </section>
     </main>
