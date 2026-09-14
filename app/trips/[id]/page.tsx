@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import TripItineraryBoard from "@/components/trip-itinerary-board";
 
 interface TripPageProps {
   params: Promise<{
@@ -68,7 +69,9 @@ export default async function TripPage({ params }: TripPageProps) {
       name,
       category,
       city,
-      rating
+      rating,
+      latitude,
+      longitude
     )
   `,
     )
@@ -85,6 +88,34 @@ export default async function TripPage({ params }: TripPageProps) {
   if (tripPlacesError) {
     throw new Error(tripPlacesError.message);
   }
+
+  const itineraryPlaces =
+    tripPlaces?.flatMap((item) => {
+      const place = Array.isArray(item.places) ? item.places[0] : item.places;
+
+      if (!place) {
+        return [];
+      }
+
+      return [
+        {
+          id: item.id,
+          tripDayId: item.trip_day_id,
+          position: item.position,
+          placeId: place.id,
+          name: place.name,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        },
+      ];
+    }) ?? [];
+
+  const itineraryDays =
+    days?.map((day) => ({
+      id: day.id,
+      dayNumber: day.day_number,
+      title: day.title,
+    })) ?? [];
 
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-950">
@@ -133,68 +164,7 @@ export default async function TripPage({ params }: TripPageProps) {
             </form>
           </div>
 
-          {days && days.length > 0 ? (
-            <div className="space-y-3">
-              {days.map((day) => {
-                const placesForDay =
-                  tripPlaces?.filter((item) => item.trip_day_id === day.id) ??
-                  [];
-
-                return (
-                  <div
-                    key={day.id}
-                    className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <h3 className="text-lg font-semibold">
-                        {day.title ?? `Day ${day.day_number}`}
-                      </h3>
-
-                      <Link
-                        href={`/trips/${trip.id}/days/${day.id}/add-place`}
-                        className="shrink-0 inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                      >
-                        + 장소 추가
-                      </Link>
-                    </div>
-
-                    {placesForDay.length > 0 ? (
-                      <ol className="mt-4 space-y-3">
-                        {placesForDay.map((item) => {
-                          const place = Array.isArray(item.places)
-                            ? item.places[0]
-                            : item.places;
-
-                          if (!place) {
-                            return null;
-                          }
-
-                          return (
-                            <li
-                              key={item.id}
-                              className="rounded-lg bg-zinc-50 p-3"
-                            >
-                              <span className="mr-2 font-medium">
-                                {item.position}.
-                              </span>
-
-                              {place.name}
-                            </li>
-                          );
-                        })}
-                      </ol>
-                    ) : (
-                      <p className="mt-4 text-sm text-zinc-500">
-                        아직 추가된 장소가 없습니다.
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">아직 일정이 없습니다.</p>
-          )}
+          <TripItineraryBoard days={itineraryDays} places={itineraryPlaces} />
         </div>
       </section>
     </main>
