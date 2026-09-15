@@ -12,10 +12,15 @@ interface AddPlacePageProps {
   }>;
 }
 
-type PlaceListItem = Pick<
-  Place,
-  "id" | "name" | "category" | "city" | "rating"
->;
+type CandidatePlace = {
+  id: string;
+  name: string;
+  category: Place["category"];
+  city: string | null;
+  rating: number | null;
+  latitude: number;
+  longitude: number;
+};
 
 async function addPlaceToDay(tripId: string, dayId: string, placeId: string) {
   "use server";
@@ -62,6 +67,21 @@ function getCategoryLabel(category: Place["category"]) {
   }
 }
 
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 export default async function AddPlacePage({ params }: AddPlacePageProps) {
   const { id, dayId } = await params;
 
@@ -86,21 +106,116 @@ export default async function AddPlacePage({ params }: AddPlacePageProps) {
     notFound();
   }
 
-  let placesQuery = supabase
-    .from("places")
-    .select("id, name, category, city, rating")
-    .order("name", { ascending: true });
+  const { data: existingTripPlaces, error: existingTripPlacesError } =
+    await supabase
+      .from("trip_places")
+      .select(
+        `
+      place_id,
+      trip_days!inner (
+        trip_id
+      ),
+      places (
+        id,
+        latitude,
+        longitude
+      )
+    `,
+      )
+      .eq("trip_days.trip_id", id);
 
-  if (trip.city) {
-    placesQuery = placesQuery.eq("city", trip.city);
+  if (existingTripPlacesError) {
+    throw new Error(existingTripPlacesError.message);
   }
 
-  const { data: places, error: placesError } =
-    await placesQuery.returns<PlaceListItem[]>();
+  const existingPlaceIds = new Set(
+    (existingTripPlaces ?? []).map((item) => item.place_id),
+  );
+
+  const existingCoordinates = (existingTripPlaces ?? [])
+    .map((item) => {
+      const place = Array.isArray(item.places) ? item.places[0] : item.places;
+
+      if (
+        !place ||
+        !Number.isFinite(place.latitude) ||
+        !Number.isFinite(place.longitude)
+      ) {
+        return null;
+      }
+
+      return {
+        latitude: place.latitude,
+        longitude: place.longitude,
+      };
+    })
+    .filter(
+      (
+        coordinate,
+      ): coordinate is {
+        latitude: number;
+        longitude: number;
+      } => coordinate !== null,
+    );
+
+  const center =
+    existingCoordinates.length > 0
+      ? {
+          latitude:
+            existingCoordinates.reduce(
+              (sum, place) => sum + place.latitude,
+              0,
+            ) / existingCoordinates.length,
+          longitude:
+            existingCoordinates.reduce(
+              (sum, place) => sum + place.longitude,
+              0,
+            ) / existingCoordinates.length,
+        }
+      : null;
+
+  let placesQuery = supabase
+    .from("places")
+    .select("id, name, category, city, rating, latitude, longitude")
+    .order("name", { ascending: true })
+    .returns<CandidatePlace[]>();
+
+  const { data: places, error: placesError } = await placesQuery;
 
   if (placesError) {
     throw new Error(placesError.message);
   }
+
+  const nearbyPlaces = (places ?? [])
+    .filter((place) => !existingPlaceIds.has(place.id))
+    .map((place) => {
+      const distanceKm = center
+        ? getDistanceKm(
+            center.latitude,
+            center.longitude,
+            place.latitude,
+            place.longitude,
+          )
+        : null;
+
+      return {
+        ...place,
+        distanceKm,
+      };
+    })
+    .filter((place) => {
+      if (!center) {
+        return true;
+      }
+
+      return place.distanceKm !== null && place.distanceKm <= 80;
+    })
+    .sort((a, b) => {
+      if (a.distanceKm === null) return 1;
+      if (b.distanceKm === null) return -1;
+
+      return a.distanceKm - b.distanceKm;
+    });
 
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-950">
@@ -124,7 +239,7 @@ export default async function AddPlacePage({ params }: AddPlacePageProps) {
           </p>
         ) : (
           <ul className="space-y-3">
-            {places.map((place) => (
+            {nearbyPlaces.map((place) => (
               <li
                 key={place.id}
                 className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"

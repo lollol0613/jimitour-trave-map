@@ -14,6 +14,7 @@ async function createPlace(formData: FormData) {
   const latitude = Number(formData.get("latitude"));
   const longitude = Number(formData.get("longitude"));
   const ratingValue = formData.get("rating");
+  const imageUrl = String(formData.get("image_url") ?? "").trim();
   const rating =
     ratingValue === null || String(ratingValue).trim() === ""
       ? null
@@ -28,6 +29,7 @@ async function createPlace(formData: FormData) {
     memo: memo || null,
     latitude,
     longitude,
+    image_url: imageUrl || null,
   });
 
   if (error) {
@@ -154,6 +156,17 @@ export default function NewPlacePage() {
               <option value="4.5">⭐ 추천</option>
               <option value="5">🔥 개추</option>
             </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">이미지 URL</label>
+
+            <input
+              type="url"
+              name="image_url"
+              placeholder="https://..."
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+            />
           </div>
 
           <div>

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import TripItineraryBoard from "@/components/trip-itinerary-board";
-import TripOverviewMap from "@/components/trip-overview-map";
 
 interface TripPageProps {
   params: Promise<{
@@ -107,6 +106,7 @@ export default async function TripPage({ params }: TripPageProps) {
           name: place.name,
           latitude: place.latitude,
           longitude: place.longitude,
+          category: place.category,
         },
       ];
     }) ?? [];
@@ -117,29 +117,6 @@ export default async function TripPage({ params }: TripPageProps) {
       dayNumber: day.day_number,
       title: day.title,
     })) ?? [];
-
-  const overviewPlaces =
-    tripPlaces?.flatMap((item) => {
-      const place = Array.isArray(item.places) ? item.places[0] : item.places;
-
-      const day = days?.find((day) => day.id === item.trip_day_id);
-
-      if (!place || !day) {
-        return [];
-      }
-
-      return [
-        {
-          id: item.id,
-          name: place.name,
-          category: place.category,
-          latitude: place.latitude,
-          longitude: place.longitude,
-          dayNumber: day.day_number,
-          position: item.position,
-        },
-      ];
-    }) ?? [];
 
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-950">
@@ -152,9 +129,22 @@ export default async function TripPage({ params }: TripPageProps) {
         </Link>
 
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <p className="mb-2 text-sm font-medium text-blue-600">여행 일정</p>
+          <div className="mb-2 flex items-start justify-between gap-4">
+            <div>
+              <p className="mb-2 text-sm font-medium text-blue-600">
+                여행 일정
+              </p>
 
-          <h1 className="text-3xl font-bold tracking-tight">{trip.name}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{trip.name}</h1>
+            </div>
+
+            <Link
+              href={`/trips/${trip.id}/edit`}
+              className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              일정 수정
+            </Link>
+          </div>
 
           <div className="mt-6 space-y-3 text-sm text-zinc-700">
             <p>
@@ -174,10 +164,6 @@ export default async function TripPage({ params }: TripPageProps) {
           </div>
         </div>
 
-        <div className="mt-6">
-          <TripOverviewMap places={overviewPlaces} />
-        </div>
-
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">일정</h2>
@@ -187,7 +173,7 @@ export default async function TripPage({ params }: TripPageProps) {
                 type="submit"
                 className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
-                + Day 추가
+                + Day
               </button>
             </form>
           </div>

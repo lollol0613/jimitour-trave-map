@@ -21,6 +21,7 @@ async function updatePlace(id: string, formData: FormData) {
   const status = String(formData.get("status") ?? "");
   const address = String(formData.get("address") ?? "");
   const memo = String(formData.get("memo") ?? "");
+  const imageUrl = String(formData.get("image_url") ?? "");
 
   const latitude = Number(formData.get("latitude"));
   const longitude = Number(formData.get("longitude"));
@@ -43,6 +44,7 @@ async function updatePlace(id: string, formData: FormData) {
       latitude,
       longitude,
       rating,
+      image_url: imageUrl || null,
     })
     .eq("id", id)
     .select("id, rating");
@@ -204,6 +206,18 @@ export default async function EditPlacePage({ params }: EditPlacePageProps) {
               name="memo"
               rows={4}
               defaultValue={place.memo ?? ""}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">이미지 URL</label>
+
+            <input
+              type="url"
+              name="image_url"
+              defaultValue={place.image_url ?? ""}
+              placeholder="https://..."
               className="w-full rounded-lg border border-zinc-300 px-3 py-2"
             />
           </div>

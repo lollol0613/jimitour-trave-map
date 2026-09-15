@@ -7,6 +7,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { supabase } from "@/lib/supabase";
 import TripRouteMap from "@/components/trip-route-map";
 import Link from "next/link";
+import TripOverviewMap from "@/components/trip-overview-map";
 
 import TripDayBoard, {
   DroppableDay,
@@ -21,6 +22,7 @@ type ItineraryPlace = {
   name: string;
   latitude: number;
   longitude: number;
+  category: string;
 };
 
 type ItineraryDay = {
@@ -57,185 +59,347 @@ export default function TripItineraryBoard({
   places,
 }: TripItineraryBoardProps) {
   const [items, setItems] = useState(places);
+  const overviewPlaces = items
+    .map((item) => {
+      const day = days.find((day) => day.id === item.tripDayId);
+
+      if (!day) {
+        return null;
+      }
+
+      return {
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        dayNumber: day.dayNumber,
+        position: item.position,
+      };
+    })
+    .filter((place): place is NonNullable<typeof place> => place !== null);
   return (
-    <TripDayBoard
-      onDragEnd={(activeId, overId) => {
-        if (!overId) {
-          return;
-        }
-
-        setItems((currentItems) => {
-          const activeItem = currentItems.find((item) => item.id === activeId);
-
-          if (!activeItem) {
-            return currentItems;
+    <>
+      <div className="mb-8">
+        <TripOverviewMap places={overviewPlaces} />
+      </div>
+      <TripDayBoard
+        onDragEnd={(activeId, overId) => {
+          if (!overId) {
+            return;
           }
 
-          const overItem = currentItems.find((item) => item.id === overId);
+          setItems((currentItems) => {
+            const activeItem = currentItems.find(
+              (item) => item.id === activeId,
+            );
 
-          const overDay = days.find((day) => day.id === overId);
-
-          const targetDayId = overItem
-            ? overItem.tripDayId
-            : overDay
-              ? overDay.id
-              : null;
-
-          if (!targetDayId) {
-            return currentItems;
-          }
-
-          const sourceDayId = activeItem.tripDayId;
-
-          if (sourceDayId === targetDayId) {
-            if (!overItem || activeId === overId) {
+            if (!activeItem) {
               return currentItems;
             }
 
-            const dayItems = currentItems
-              .filter((item) => item.tripDayId === sourceDayId)
+            const overItem = currentItems.find((item) => item.id === overId);
+
+            const overDay = days.find((day) => day.id === overId);
+
+            const targetDayId = overItem
+              ? overItem.tripDayId
+              : overDay
+                ? overDay.id
+                : null;
+
+            if (!targetDayId) {
+              return currentItems;
+            }
+
+            const sourceDayId = activeItem.tripDayId;
+
+            if (sourceDayId === targetDayId) {
+              if (!overItem || activeId === overId) {
+                return currentItems;
+              }
+
+              const dayItems = currentItems
+                .filter((item) => item.tripDayId === sourceDayId)
+                .sort((a, b) => a.position - b.position);
+
+              const oldIndex = dayItems.findIndex(
+                (item) => item.id === activeId,
+              );
+
+              const newIndex = dayItems.findIndex((item) => item.id === overId);
+
+              const reorderedDayItems = arrayMove(
+                dayItems,
+                oldIndex,
+                newIndex,
+              ).map((item, index) => ({
+                ...item,
+                position: index + 1,
+              }));
+
+              const newItems = currentItems.map((item) => {
+                const updatedItem = reorderedDayItems.find(
+                  (reordered) => reordered.id === item.id,
+                );
+
+                return updatedItem ?? item;
+              });
+
+              saveOrder(newItems);
+
+              return newItems;
+            }
+
+            const sourceItems = currentItems
+              .filter(
+                (item) =>
+                  item.tripDayId === sourceDayId && item.id !== activeId,
+              )
+              .sort((a, b) => a.position - b.position)
+              .map((item, index) => ({
+                ...item,
+                position: index + 1,
+              }));
+
+            const targetItems = currentItems
+              .filter((item) => item.tripDayId === targetDayId)
               .sort((a, b) => a.position - b.position);
 
-            const oldIndex = dayItems.findIndex((item) => item.id === activeId);
+            const movedItem = {
+              ...activeItem,
+              tripDayId: targetDayId,
+            };
 
-            const newIndex = dayItems.findIndex((item) => item.id === overId);
+            if (overItem) {
+              const targetIndex = targetItems.findIndex(
+                (item) => item.id === overId,
+              );
 
-            const reorderedDayItems = arrayMove(
-              dayItems,
-              oldIndex,
-              newIndex,
-            ).map((item, index) => ({
+              targetItems.splice(targetIndex, 0, movedItem);
+            } else {
+              targetItems.push(movedItem);
+            }
+
+            const reorderedTargetItems = targetItems.map((item, index) => ({
               ...item,
               position: index + 1,
             }));
 
-            const newItems = currentItems.map((item) => {
-              const updatedItem = reorderedDayItems.find(
-                (reordered) => reordered.id === item.id,
-              );
+            const untouchedItems = currentItems.filter(
+              (item) =>
+                item.tripDayId !== sourceDayId &&
+                item.tripDayId !== targetDayId,
+            );
 
-              return updatedItem ?? item;
-            });
+            const newItems = [
+              ...untouchedItems,
+              ...sourceItems,
+              ...reorderedTargetItems,
+            ];
 
             saveOrder(newItems);
 
             return newItems;
-          }
+          });
+        }}
+      >
+        <div className="space-y-3">
+          {days.map((day) => {
+            const placesForDay = items
+              .filter((place) => place.tripDayId === day.id)
+              .sort((a, b) => a.position - b.position);
 
-          const sourceItems = currentItems
-            .filter(
-              (item) => item.tripDayId === sourceDayId && item.id !== activeId,
-            )
-            .sort((a, b) => a.position - b.position)
-            .map((item, index) => ({
-              ...item,
-              position: index + 1,
-            }));
+            return (
+              <DroppableDay
+                key={day.id}
+                dayId={day.id}
+                itemIds={placesForDay.map((place) => place.id)}
+              >
+                <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold">
+                      {day.title ?? `Day ${day.dayNumber}`}
+                    </h3>
 
-          const targetItems = currentItems
-            .filter((item) => item.tripDayId === targetDayId)
-            .sort((a, b) => a.position - b.position);
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/trips/${tripId}/days/${day.id}/add-place`}
+                        className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                      >
+                        + Place
+                      </Link>
 
-          const movedItem = {
-            ...activeItem,
-            tripDayId: targetDayId,
-          };
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const confirmed = window.confirm(
+                            `Day ${day.dayNumber}을(를) 삭제할까요?\n이 Day에 들어 있는 장소 일정도 함께 삭제됩니다.`,
+                          );
 
-          if (overItem) {
-            const targetIndex = targetItems.findIndex(
-              (item) => item.id === overId,
-            );
+                          if (!confirmed) {
+                            return;
+                          }
 
-            targetItems.splice(targetIndex, 0, movedItem);
-          } else {
-            targetItems.push(movedItem);
-          }
+                          const { error } = await supabase
+                            .from("trip_days")
+                            .delete()
+                            .eq("id", day.id);
 
-          const reorderedTargetItems = targetItems.map((item, index) => ({
-            ...item,
-            position: index + 1,
-          }));
+                          if (error) {
+                            console.error("Failed to delete day:", error);
+                            return;
+                          }
 
-          const untouchedItems = currentItems.filter(
-            (item) =>
-              item.tripDayId !== sourceDayId && item.tripDayId !== targetDayId,
-          );
+                          const remainingDays = days
+                            .filter((item) => item.id !== day.id)
+                            .sort((a, b) => a.dayNumber - b.dayNumber);
 
-          const newItems = [
-            ...untouchedItems,
-            ...sourceItems,
-            ...reorderedTargetItems,
-          ];
+                          for (
+                            let index = 0;
+                            index < remainingDays.length;
+                            index += 1
+                          ) {
+                            const currentDay = remainingDays[index];
+                            const newDayNumber = index + 1;
 
-          saveOrder(newItems);
+                            const { error: updateError } = await supabase
+                              .from("trip_days")
+                              .update({
+                                day_number: newDayNumber,
+                                title: `Day ${newDayNumber}`,
+                              })
+                              .eq("id", currentDay.id);
 
-          return newItems;
-        });
-      }}
-    >
-      <div className="space-y-3">
-        {days.map((day) => {
-          const placesForDay = items
-            .filter((place) => place.tripDayId === day.id)
-            .sort((a, b) => a.position - b.position);
+                            if (updateError) {
+                              console.error(
+                                "Failed to renumber day:",
+                                updateError,
+                              );
+                              return;
+                            }
+                          }
 
-          return (
-            <DroppableDay
-              key={day.id}
-              dayId={day.id}
-              itemIds={placesForDay.map((place) => place.id)}
-            >
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <h3 className="text-lg font-semibold">
-                    {day.title ?? `Day ${day.dayNumber}`}
-                  </h3>
-
-                  <Link
-                    href={`/trips/${tripId}/days/${day.id}/add-place`}
-                    className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                  >
-                    + 장소 추가
-                  </Link>
-                </div>
-                <p className="mt-2 text-sm text-zinc-500">
-                  {placesForDay.length}개 장소
-                </p>
-
-                {placesForDay.length > 0 && (
-                  <>
-                    <ol className="mt-3 space-y-2">
-                      {placesForDay.map((place) => (
-                        <SortablePlace key={place.id} id={place.id}>
-                          <li className="rounded-lg bg-zinc-50 p-3">
-                            <span className="mr-2 font-medium">
-                              {place.position}.
-                            </span>
-
-                            {place.name}
-                          </li>
-                        </SortablePlace>
-                      ))}
-                    </ol>
-
-                    <div className="mt-5">
-                      <TripRouteMap
-                        places={placesForDay.map((place) => ({
-                          id: place.placeId,
-                          name: place.name,
-                          latitude: place.latitude,
-                          longitude: place.longitude,
-                          position: place.position,
-                        }))}
-                      />
+                          window.location.reload();
+                        }}
+                        className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                      >
+                        Delete Day
+                      </button>
                     </div>
-                  </>
-                )}
-              </div>
-            </DroppableDay>
-          );
-        })}
-      </div>
-    </TripDayBoard>
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    {placesForDay.length}개 장소
+                  </p>
+
+                  {placesForDay.length > 0 && (
+                    <>
+                      <ol className="mt-3 space-y-2">
+                        {placesForDay.map((place) => (
+                          <SortablePlace key={place.id} id={place.id}>
+                            <li className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
+                              <div className="min-w-0">
+                                <span className="mr-2 font-medium">
+                                  {place.position}.
+                                </span>
+
+                                <span>{place.name}</span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onPointerDown={(event) =>
+                                  event.stopPropagation()
+                                }
+                                onClick={async (event) => {
+                                  event.stopPropagation();
+
+                                  const confirmed = window.confirm(
+                                    `"${place.name}"을(를) 이 Day에서 삭제할까요?`,
+                                  );
+
+                                  if (!confirmed) {
+                                    return;
+                                  }
+
+                                  const { error } = await supabase
+                                    .from("trip_places")
+                                    .delete()
+                                    .eq("id", place.id);
+
+                                  if (error) {
+                                    console.error(
+                                      "Failed to delete place:",
+                                      error,
+                                    );
+                                    return;
+                                  }
+
+                                  setItems((currentItems) => {
+                                    const remainingItems = currentItems
+                                      .filter((item) => item.id !== place.id)
+                                      .map((item) => {
+                                        if (
+                                          item.tripDayId !== place.tripDayId
+                                        ) {
+                                          return item;
+                                        }
+
+                                        const sameDayItems = currentItems
+                                          .filter(
+                                            (dayItem) =>
+                                              dayItem.tripDayId ===
+                                                place.tripDayId &&
+                                              dayItem.id !== place.id,
+                                          )
+                                          .sort(
+                                            (a, b) => a.position - b.position,
+                                          );
+
+                                        const newPosition =
+                                          sameDayItems.findIndex(
+                                            (dayItem) => dayItem.id === item.id,
+                                          ) + 1;
+
+                                        return {
+                                          ...item,
+                                          position: newPosition,
+                                        };
+                                      });
+
+                                    saveOrder(remainingItems);
+
+                                    return remainingItems;
+                                  });
+                                }}
+                                className="shrink-0 text-xs font-medium text-red-600 hover:text-red-700"
+                              >
+                                삭제
+                              </button>
+                            </li>
+                          </SortablePlace>
+                        ))}
+                      </ol>
+
+                      <div className="mt-5">
+                        <TripRouteMap
+                          places={placesForDay.map((place) => ({
+                            id: place.placeId,
+                            name: place.name,
+                            latitude: place.latitude,
+                            longitude: place.longitude,
+                            position: place.position,
+                          }))}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </DroppableDay>
+            );
+          })}
+        </div>
+      </TripDayBoard>
+    </>
   );
 }

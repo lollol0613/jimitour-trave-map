@@ -20,6 +20,7 @@ type MapPlace = Pick<
   | "address"
   | "rating"
   | "memo"
+  | "image_url"
 >;
 
 function getCategoryLabel(category: Place["category"]) {
@@ -64,7 +65,17 @@ interface TravelMapProps {
 
 function createPopupContent(place: MapPlace) {
   const content = document.createElement("div");
-  content.className = "space-y-1 text-sm text-zinc-700";
+  content.className = "space-y-1 pr-4 pt-1 text-sm text-zinc-700";
+
+  if (place.image_url) {
+    const image = document.createElement("img");
+
+    image.src = place.image_url;
+    image.alt = place.name;
+    image.className = "mb-3 h-20 w-full rounded-lg object-cover";
+
+    content.appendChild(image);
+  }
 
   const title = document.createElement("h3");
   title.className = "mb-2 text-base font-semibold text-zinc-950";

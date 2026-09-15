@@ -6,6 +6,7 @@ import Link from "next/link";
 import TravelMap from "@/components/travel-map";
 import { getRatingLabel } from "@/lib/rating";
 import type { Place } from "@/types/place";
+import { getGoogleMapsSearchUrl } from "@/lib/google-maps";
 
 type PlaceListItem = Pick<
   Place,
@@ -19,6 +20,7 @@ type PlaceListItem = Pick<
   | "city"
   | "rating"
   | "memo"
+  | "image_url"
 >;
 
 type FilterCategory = "all" | Place["category"];
@@ -77,7 +79,6 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "Matamata",
     "Muriwai",
     "New Plymouth",
-    "Ngatea",
     "Northland",
     "Paeroa",
     "Pokeno",
@@ -90,6 +91,11 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "Wellington",
     "Whangarei",
     "Northland",
+    "Tongariro",
+    "Raglan",
+    "Hastings",
+    "Napier",
+    "Tauranga",
   ];
 
   const SOUTH_ISLAND_CITIES = [
@@ -103,6 +109,15 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "Tekapo",
     "Twizel",
     "Wanaka",
+    "West Coast",
+    "Blenheim",
+    "Otago",
+    "Methven",
+    "Hanmer Springs",
+    "Bluff",
+    "Dunedin",
+    "Oamaru",
+    "Tasman",
   ];
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -239,40 +254,47 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
                 onClick={() => setSelectedPlaceId(place.id)}
                 className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
               >
-                <div className="flex flex-col gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold">{place.name}</h3>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold">{place.name}</h3>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
-                      <span>{getCategoryLabel(place.category)}</span>
-                      <span>·</span>
-                      <span>{getRatingLabel(place.rating)}</span>
-                    </div>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      {getCategoryLabel(place.category)}
+                      {place.city ? ` · ${place.city}` : ""}
+                    </p>
+
+                    <p className="mt-1 text-sm text-zinc-500">
+                      {getRatingLabel(place.rating)}
+                    </p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/places/${place.id}`}
-                      onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                    >
-                      상세보기
-                    </Link>
+                  {place.image_url && (
+                    <img
+                      src={place.image_url}
+                      alt={place.name}
+                      className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                    />
+                  )}
+                </div>
 
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        place.address
-                          ? `${place.name}, ${place.address}`
-                          : place.name,
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                    >
-                      Google Maps
-                    </a>
-                  </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Link
+                    href={`/places/${place.id}`}
+                    onClick={(event) => event.stopPropagation()}
+                    className="rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                  >
+                    상세보기
+                  </Link>
+
+                  <a
+                    href={getGoogleMapsSearchUrl(place.name, place.address)}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                  >
+                    Google Maps에서 보기
+                  </a>
                 </div>
               </li>
             ))}

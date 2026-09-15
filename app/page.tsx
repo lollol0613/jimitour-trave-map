@@ -18,6 +18,7 @@ type PlaceListItem = Pick<
   | "city"
   | "rating"
   | "memo"
+  | "image_url"
 >;
 
 export default async function Home() {
@@ -26,7 +27,7 @@ export default async function Home() {
   const { data: places, error } = await supabase
     .from("places")
     .select(
-      "id, name, category, status, latitude, longitude, address, city, rating, memo",
+      "id, name, category, status, latitude, longitude, address, city, rating, memo, image_url",
     )
     .returns<PlaceListItem[]>();
 
