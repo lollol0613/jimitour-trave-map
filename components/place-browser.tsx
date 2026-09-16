@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import TravelMap from "@/components/travel-map";
@@ -69,6 +69,14 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "all" | "north" | "south"
   >("all");
 
+  const PAGE_SIZE = 20;
+
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedCity, selectedCategory, selectedIsland]);
+
   const NORTH_ISLAND_CITIES = [
     "Auckland",
     "Cambridge",
@@ -118,6 +126,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "Dunedin",
     "Oamaru",
     "Tasman",
+    "Kapiti Coast",
   ];
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -152,8 +161,8 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
   });
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
-      <div>
+    <div className="mx-auto grid w-full max-w-3xl gap-8 xl:max-w-none xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
+      <div className="min-w-0">
         <div className="mb-5">
           <h2 className="mb-3 text-xl font-semibold">지역 선택</h2>
 
@@ -187,25 +196,27 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
             })}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {["all", ...visibleCities].map((city) => {
-              const selected = city === selectedCity;
+          <div className="min-w-0 overflow-x-auto pb-2">
+            <div className="flex w-max gap-2">
+              {["all", ...visibleCities].map((city) => {
+                const selected = city === selectedCity;
 
-              return (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => setSelectedCity(city)}
-                  className={
-                    selected
-                      ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-                      : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                  }
-                >
-                  {city === "all" ? "All" : city}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => setSelectedCity(city)}
+                    className={
+                      selected
+                        ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                        : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                    }
+                  >
+                    {city === "all" ? "All" : city}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -239,7 +250,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
         </section>
       </div>
 
-      <aside className="lg:max-h-[680px] lg:overflow-y-auto lg:pr-2">
+      <aside className="xl:max-h-[680px] xl:overflow-y-auto xl:pr-2">
         <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
 
         {filteredPlaces.length === 0 ? (
@@ -248,7 +259,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
           </p>
         ) : (
           <ul className="space-y-3">
-            {filteredPlaces.map((place) => (
+            {filteredPlaces.slice(0, visibleCount).map((place) => (
               <li
                 key={place.id}
                 onClick={() => setSelectedPlaceId(place.id)}
@@ -299,6 +310,16 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
               </li>
             ))}
           </ul>
+        )}
+        {visibleCount < filteredPlaces.length && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            className="mt-4 w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+          >
+            더 보기 ({Math.min(PAGE_SIZE, filteredPlaces.length - visibleCount)}
+            개)
+          </button>
         )}
       </aside>
     </div>
