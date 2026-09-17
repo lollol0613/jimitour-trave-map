@@ -130,6 +130,9 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
   ];
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<
+    "all" | "visited" | "wishlist"
+  >("all");
 
   const cities = Array.from(
     new Set(
@@ -157,12 +160,43 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
 
     const matchesCity = selectedCity === "all" || place.city === selectedCity;
 
-    return matchesCategory && matchesCity;
+    const matchesStatus =
+      selectedStatus === "all" || place.status === selectedStatus;
+
+    return matchesCategory && matchesCity && matchesStatus;
   });
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-8 xl:max-w-none xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
       <div className="min-w-0">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            { value: "all", label: "전체 상태" },
+            { value: "wishlist", label: "🟡 Wishlist" },
+            { value: "visited", label: "🟢 지미 Pick" },
+          ].map((status) => {
+            const selected = status.value === selectedStatus;
+
+            return (
+              <button
+                key={status.value}
+                type="button"
+                onClick={() =>
+                  setSelectedStatus(
+                    status.value as "all" | "visited" | "wishlist",
+                  )
+                }
+                className={
+                  selected
+                    ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+                    : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                }
+              >
+                {status.label}
+              </button>
+            );
+          })}
+        </div>
         <div className="mb-5">
           <h2 className="mb-3 text-xl font-semibold">지역 선택</h2>
 
@@ -317,8 +351,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
             onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
             className="mt-4 w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
           >
-            더 보기 ({Math.min(PAGE_SIZE, filteredPlaces.length - visibleCount)}
-            개)
+            더 보기 ({filteredPlaces.length - visibleCount}개 남음)
           </button>
         )}
       </aside>
