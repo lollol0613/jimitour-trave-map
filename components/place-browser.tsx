@@ -69,13 +69,27 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "all" | "north" | "south"
   >("all");
 
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [selectedStatus, setSelectedStatus] = useState<
+    "all" | "visited" | "wishlist"
+  >("all");
+
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+
   const PAGE_SIZE = 20;
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [selectedCity, selectedCategory, selectedIsland]);
+  }, [
+    selectedCity,
+    selectedCategory,
+    selectedIsland,
+    selectedStatus,
+    searchQuery,
+  ]);
 
   const NORTH_ISLAND_CITIES = [
     "Auckland",
@@ -129,11 +143,6 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "Kapiti Coast",
   ];
 
-  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<
-    "all" | "visited" | "wishlist"
-  >("all");
-
   const cities = Array.from(
     new Set(
       places
@@ -163,12 +172,28 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     const matchesStatus =
       selectedStatus === "all" || place.status === selectedStatus;
 
-    return matchesCategory && matchesCity && matchesStatus;
+    const query = searchQuery.trim().toLowerCase();
+
+    const matchesSearch =
+      query === "" ||
+      place.name.toLowerCase().includes(query) ||
+      (place.city ?? "").toLowerCase().includes(query);
+
+    return matchesCategory && matchesCity && matchesStatus && matchesSearch;
   });
 
   return (
     <div className="mx-auto grid w-full max-w-3xl gap-8 xl:max-w-none xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
       <div className="min-w-0">
+        <div className="mb-5">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="장소 이름 또는 도시 검색"
+            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm outline-none focus:border-blue-500"
+          />
+        </div>
         <div className="mb-4 flex flex-wrap gap-2">
           {[
             { value: "all", label: "전체 상태" },
