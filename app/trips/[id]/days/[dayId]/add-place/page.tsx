@@ -18,7 +18,7 @@ async function addPlaceToDay(tripId: string, dayId: string, placeId: string) {
   const supabase = await createServerSupabaseClient();
 
   const { data: lastItem, error: readError } = await supabase
-    .from("trip_places")
+    .from("trip_items")
     .select("position")
     .eq("trip_day_id", dayId)
     .order("position", { ascending: false })
@@ -31,9 +31,11 @@ async function addPlaceToDay(tripId: string, dayId: string, placeId: string) {
 
   const nextPosition = lastItem ? lastItem.position + 1 : 1;
 
-  const { error: insertError } = await supabase.from("trip_places").insert({
+  const { error: insertError } = await supabase.from("trip_items").insert({
     trip_day_id: dayId,
+    item_type: "place",
     place_id: placeId,
+    event_id: null,
     position: nextPosition,
   });
 

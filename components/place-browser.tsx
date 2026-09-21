@@ -27,10 +27,34 @@ type PlaceListItem = Pick<
   | "image_url"
 >;
 
-type FilterCategory = "all" | Place["category"];
+type EventListItem = {
+  id: string;
+  name: string;
+  city: string | null;
+  start_date: string;
+  end_date: string | null;
+  event_month: number | null;
+  category: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  image_url: string | null;
+  memo: string | null;
+};
+
+type FilterCategory =
+  | "all"
+  | "accommodation"
+  | "restaurant"
+  | "attraction"
+  | "cafe"
+  | "shopping"
+  | "event"
+  | "other";
 
 interface PlaceBrowserProps {
   places: PlaceListItem[];
+  events: EventListItem[];
 }
 
 const filters: {
@@ -42,11 +66,12 @@ const filters: {
   { value: "restaurant", label: "🍴 맛집" },
   { value: "attraction", label: "📍 가볼 곳" },
   { value: "cafe", label: "☕ 카페" },
-  { value: "shopping", label: "🛍 쇼핑" },
+  { value: "shopping", label: "🛒 쇼핑" },
+  { value: "event", label: "🎆 이벤트" },
   { value: "other", label: "📌 기타" },
 ];
 
-function getCategoryLabel(category: Place["category"]) {
+function getCategoryLabel(category: FilterCategory) {
   switch (category) {
     case "accommodation":
       return "🏨 숙박";
@@ -57,13 +82,15 @@ function getCategoryLabel(category: Place["category"]) {
     case "cafe":
       return "☕ 카페";
     case "shopping":
-      return "🛍 쇼핑";
+      return "🛒 쇼핑";
+    case "event":
+      return "🎆 이벤트";
     default:
       return "📌 기타";
   }
 }
 
-export default function PlaceBrowser({ places }: PlaceBrowserProps) {
+export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
   const [selectedCategory, setSelectedCategory] =
     useState<FilterCategory>("all");
 
@@ -81,6 +108,8 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
+  const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
+
   const PAGE_SIZE = 20;
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -92,6 +121,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     selectedCategory,
     selectedIsland,
     selectedStatus,
+    selectedMonth,
     searchQuery,
   ]);
 
@@ -168,23 +198,64 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     return SOUTH_ISLAND_CITIES.includes(city);
   });
 
-  const filteredPlaces = places.filter((place) => {
+  const combinedItems = [
+    ...places.map((place) => ({
+      ...place,
+      itemType: "place" as const,
+      event_month: null,
+      start_date: null,
+      end_date: null,
+    })),
+
+    ...events.map((event) => ({
+      id: event.id,
+      name: event.name,
+      category: "event" as const,
+      status: null,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      address: event.address,
+      city: event.city,
+      rating: null,
+      memo: event.memo,
+      image_url: event.image_url,
+      itemType: "event" as const,
+      event_month: event.event_month,
+      start_date: event.start_date,
+      end_date: event.end_date,
+    })),
+  ];
+
+  const filteredPlaces = combinedItems.filter((place) => {
     const matchesCategory =
       selectedCategory === "all" || place.category === selectedCategory;
 
     const matchesCity = selectedCity === "all" || place.city === selectedCity;
 
     const matchesStatus =
-      selectedStatus === "all" || place.status === selectedStatus;
+      place.itemType === "event"
+        ? true
+        : selectedStatus === "all" || place.status === selectedStatus;
 
     const query = searchQuery.trim().toLowerCase();
+
+    const matchesMonth =
+      place.itemType !== "event" ||
+      selectedMonth === "all" ||
+      place.event_month === selectedMonth;
 
     const matchesSearch =
       query === "" ||
       place.name.toLowerCase().includes(query) ||
       (place.city ?? "").toLowerCase().includes(query);
 
-    return matchesCategory && matchesCity && matchesStatus && matchesSearch;
+    return (
+      matchesCategory &&
+      matchesCity &&
+      matchesStatus &&
+      matchesMonth &&
+      matchesSearch
+    );
   });
 
   return (
@@ -305,9 +376,49 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
           })}
         </div>
 
+        {selectedCategory === "event" && (
+          <div className="mb-6 min-w-0 overflow-x-auto pb-2">
+            <div className="flex w-max gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedMonth("all")}
+                className={
+                  selectedMonth === "all"
+                    ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                    : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                }
+              >
+                전체 월
+              </button>
+
+              {Array.from({ length: 12 }, (_, index) => {
+                const month = index + 1;
+
+                return (
+                  <button
+                    key={month}
+                    type="button"
+                    onClick={() => setSelectedMonth(month)}
+                    className={
+                      selectedMonth === month
+                        ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                        : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                    }
+                  >
+                    {month}월
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <section aria-labelledby="map-heading">
           <TravelMap
-            places={filteredPlaces}
+            places={filteredPlaces.filter(
+              (item): item is typeof item & { itemType: "place" } =>
+                item.itemType === "place",
+            )}
             selectedPlaceId={selectedPlaceId}
             selectedCity={selectedCity}
           />
@@ -373,9 +484,24 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
                       {place.city ? ` · ${place.city}` : ""}
                     </p>
 
-                    <p className="mt-1 text-sm text-zinc-500">
-                      {getRatingLabel(place.rating)}
-                    </p>
+                    {place.itemType === "event" ? (
+                      <p className="mt-1 text-sm text-zinc-500">
+                        {place.start_date}
+                        {place.end_date && place.end_date !== place.start_date
+                          ? ` ~ ${place.end_date}`
+                          : ""}
+
+                        {place.event_month && (
+                          <span className="ml-2">
+                            · 매년 {place.event_month}월
+                          </span>
+                        )}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-sm text-zinc-500">
+                        {getRatingLabel(place.rating)}
+                      </p>
+                    )}
                   </div>
 
                   {place.image_url && (
@@ -389,7 +515,11 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <Link
-                    href={`/places/${place.id}`}
+                    href={
+                      place.itemType === "event"
+                        ? `/events/${place.id}`
+                        : `/places/${place.id}`
+                    }
                     onClick={(event) => event.stopPropagation()}
                     className="rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
                   >
@@ -397,13 +527,22 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
                   </Link>
 
                   <a
-                    href={getGoogleMapsSearchUrl(place.name, place.address)}
+                    href={
+                      place.itemType === "event"
+                        ? getGoogleMapsSearchUrl(
+                            place.address || place.city || place.name,
+                            null,
+                          )
+                        : getGoogleMapsSearchUrl(place.name, place.address)
+                    }
                     target="_blank"
                     rel="noreferrer"
                     onClick={(event) => event.stopPropagation()}
                     className="rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
                   >
-                    Google Maps에서 보기
+                    {place.itemType === "event"
+                      ? "행사 위치 보기"
+                      : "Google Maps에서 보기"}
                   </a>
                 </div>
               </li>

@@ -37,6 +37,30 @@ export default async function Home() {
     .select("id, name, city, memo")
     .order("created_at", { ascending: false });
 
+  const { data: events, error: eventsError } = await supabase
+    .from("events")
+    .select(
+      `
+    id,
+    name,
+    city,
+    start_date,
+    end_date,
+    event_month,
+    category,
+    address,
+    latitude,
+    longitude,
+    image_url,
+    memo
+  `,
+    )
+    .order("start_date", { ascending: true });
+
+  if (eventsError) {
+    throw new Error(eventsError.message);
+  }
+
   if (tripsError) {
     throw new Error(tripsError.message);
   }
@@ -115,7 +139,7 @@ export default async function Home() {
         )}
 
         <section aria-labelledby="map-heading" className="mb-12">
-          <PlaceBrowser places={places ?? []} />
+          <PlaceBrowser places={places ?? []} events={events ?? []} />
         </section>
       </section>
     </main>

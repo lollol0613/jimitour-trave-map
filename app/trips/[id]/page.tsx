@@ -61,27 +61,53 @@ export default async function TripPage({ params }: TripPageProps) {
     .eq("trip_id", id)
     .order("day_number", { ascending: true });
 
-  const { data: tripPlaces, error: tripPlacesError } = await supabase
-    .from("trip_places")
-    .select(
-      `
-    id,
-    trip_day_id,
-    position,
-    places (
+  const dayIds = days?.map((day) => day.id) ?? [];
+
+  let tripItems = null;
+  let tripItemsError = null;
+
+  if (dayIds.length > 0) {
+    const result = await supabase
+      .from("trip_items")
+      .select(
+        `
       id,
-      name,
-      category,
-      city,
-      rating,
-      latitude,
-      longitude,
-      status,
-      memo
-    )
-  `,
-    )
-    .order("position", { ascending: true });
+      trip_day_id,
+      item_type,
+      position,
+      place_id,
+      event_id,
+      places (
+        id,
+        name,
+        category,
+        city,
+        rating,
+        latitude,
+        longitude,
+        status,
+        memo
+      ),
+      events (
+        id,
+        name,
+        city,
+        start_date,
+        end_date,
+        event_month,
+        category,
+        latitude,
+        longitude,
+        memo
+      )
+    `,
+      )
+      .in("trip_day_id", dayIds)
+      .order("position", { ascending: true });
+
+    tripItems = result.data;
+    tripItemsError = result.error;
+  }
 
   if (error || !trip) {
     notFound();
@@ -91,32 +117,92 @@ export default async function TripPage({ params }: TripPageProps) {
     throw new Error(daysError.message);
   }
 
-  if (tripPlacesError) {
-    throw new Error(tripPlacesError.message);
+  if (tripItemsError) {
+    throw new Error(tripItemsError.message);
   }
 
-  const itineraryPlaces =
-    tripPlaces?.flatMap((item) => {
-      const place = Array.isArray(item.places) ? item.places[0] : item.places;
+  type ItineraryItem = {
+    id: string;
+    tripDayId: string;
+    position: number;
 
-      if (!place) {
-        return [];
+    itemType: "place" | "event";
+
+    placeId: string | null;
+    eventId: string | null;
+
+    name: string;
+    latitude: number | null;
+    longitude: number | null;
+    category: string;
+
+    status: "visited" | "wishlist" | null;
+    memo: string | null;
+
+    startDate: string | null;
+    endDate: string | null;
+    eventMonth: number | null;
+  };
+
+  const itineraryItems: ItineraryItem[] =
+    tripItems?.flatMap<ItineraryItem>((item) => {
+      if (item.item_type === "place") {
+        const place = Array.isArray(item.places) ? item.places[0] : item.places;
+
+        if (!place) {
+          return [];
+        }
+
+        return [
+          {
+            id: item.id,
+            tripDayId: item.trip_day_id,
+            position: item.position,
+            itemType: "place" as const,
+            placeId: place.id,
+            eventId: null,
+            name: place.name,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            category: place.category,
+            status: place.status,
+            memo: place.memo,
+            startDate: null,
+            endDate: null,
+            eventMonth: null,
+          },
+        ];
       }
 
-      return [
-        {
-          id: item.id,
-          tripDayId: item.trip_day_id,
-          position: item.position,
-          placeId: place.id,
-          name: place.name,
-          latitude: place.latitude,
-          longitude: place.longitude,
-          category: place.category,
-          status: place.status,
-          memo: place.memo,
-        },
-      ];
+      if (item.item_type === "event") {
+        const event = Array.isArray(item.events) ? item.events[0] : item.events;
+
+        if (!event) {
+          return [];
+        }
+
+        return [
+          {
+            id: item.id,
+            tripDayId: item.trip_day_id,
+            position: item.position,
+            itemType: "event" as const,
+            placeId: null,
+            eventId: event.id,
+            name: event.name,
+            latitude: event.latitude,
+            longitude: event.longitude,
+            category: "event",
+            status: null,
+            memo: event.memo,
+            startDate: event.start_date,
+            endDate: event.end_date,
+            eventMonth: event.event_month,
+          },
+        ];
+      }
+
+      return [];
     }) ?? [];
 
   const itineraryDays =
@@ -193,7 +279,7 @@ export default async function TripPage({ params }: TripPageProps) {
           <TripItineraryBoard
             tripId={trip.id}
             days={itineraryDays}
-            places={itineraryPlaces}
+            items={itineraryItems}
           />
         </div>
       </section>

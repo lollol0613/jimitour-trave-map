@@ -19,13 +19,23 @@ type ItineraryPlace = {
   id: string;
   tripDayId: string;
   position: number;
-  placeId: string;
+
+  itemType: "place" | "event";
+
+  placeId: string | null;
+  eventId: string | null;
+
   name: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   category: string;
-  status: "visited" | "wishlist";
+
+  status: "visited" | "wishlist" | null;
   memo: string | null;
+
+  startDate: string | null;
+  endDate: string | null;
+  eventMonth: number | null;
 };
 
 type ItineraryDay = {
@@ -37,7 +47,7 @@ type ItineraryDay = {
 interface TripItineraryBoardProps {
   tripId: string;
   days: ItineraryDay[];
-  places: ItineraryPlace[];
+  items: ItineraryPlace[];
 }
 
 async function saveOrder(updatedItems: ItineraryPlace[]) {
@@ -76,18 +86,22 @@ function getCategoryIcon(category: string) {
 export default function TripItineraryBoard({
   tripId,
   days,
-  places,
+  items: initialItems = [],
 }: TripItineraryBoardProps) {
-  const [items, setItems] = useState(places);
-  const overviewPlaces = items
-    .map((item) => {
-      const day = days.find((day) => day.id === item.tripDayId);
+  const [items, setItems] = useState(initialItems);
+  const overviewPlaces = items.flatMap((item) => {
+    const day = days.find((day) => day.id === item.tripDayId);
 
-      if (!day) {
-        return null;
-      }
+    if (!day) {
+      return [];
+    }
 
-      return {
+    if (item.latitude === null || item.longitude === null) {
+      return [];
+    }
+
+    return [
+      {
         id: item.id,
         name: item.name,
         category: item.category,
@@ -95,11 +109,9 @@ export default function TripItineraryBoard({
         longitude: item.longitude,
         dayNumber: day.dayNumber,
         position: item.position,
-        status: item.status,
-        memo: item.memo,
-      };
-    })
-    .filter((place): place is NonNullable<typeof place> => place !== null);
+      },
+    ];
+  });
   return (
     <>
       <div className="mb-8">
@@ -443,13 +455,19 @@ export default function TripItineraryBoard({
 
                       <div className="mt-5">
                         <TripRouteMap
-                          places={placesForDay.map((place) => ({
-                            id: place.placeId,
-                            name: place.name,
-                            latitude: place.latitude,
-                            longitude: place.longitude,
-                            position: place.position,
-                          }))}
+                          places={placesForDay
+                            .filter(
+                              (place) =>
+                                place.latitude !== null &&
+                                place.longitude !== null,
+                            )
+                            .map((place) => ({
+                              id: place.placeId ?? place.eventId ?? place.id,
+                              name: place.name,
+                              latitude: place.latitude as number,
+                              longitude: place.longitude as number,
+                              position: place.position,
+                            }))}
                         />
                       </div>
                     </>
