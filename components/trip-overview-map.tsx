@@ -22,6 +22,28 @@ interface TripOverviewMapProps {
   places: OverviewPlace[];
 }
 
+function getDayColor(dayNumber: number) {
+  const colors = [
+    "#ef4444", // Day 1 - red
+    "#2563eb", // Day 2 - blue
+    "#16a34a", // Day 3 - green
+    "#f59e0b", // Day 4 - orange
+    "#9333ea", // Day 5 - purple
+    "#0891b2", // Day 6 - cyan
+    "#db2777", // Day 7 - pink
+    "#65a30d", // Day 8 - lime
+    "#ea580c", // Day 9 - deep orange
+    "#4f46e5", // Day 10 - indigo
+    "#0f766e", // Day 11 - teal
+    "#be123c", // Day 12 - rose
+    "#7c3aed", // Day 13 - violet
+    "#0284c7", // Day 14 - sky blue
+    "#a16207", // Day 15 - amber brown
+  ];
+
+  return colors[(dayNumber - 1) % colors.length];
+}
+
 export default function TripOverviewMap({ places }: TripOverviewMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -44,10 +66,14 @@ export default function TripOverviewMap({ places }: TripOverviewMapProps) {
         bounds.extend([place.longitude, place.latitude]);
 
         const markerElement = document.createElement("div");
-        markerElement.className =
-          "flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-white bg-blue-600 px-2 text-xs font-bold text-white shadow-md";
 
         markerElement.textContent = `D${place.dayNumber}-${place.position}`;
+
+        markerElement.className =
+          "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-regular text-white shadow-sm";
+
+        markerElement.style.backgroundColor = getDayColor(place.dayNumber);
+        markerElement.style.opacity = "0.82";
 
         new Marker({
           element: markerElement,
@@ -102,6 +128,7 @@ export default function TripOverviewMap({ places }: TripOverviewMapProps) {
           paint: {
             "line-width": 4,
             "line-opacity": 0.75,
+            "line-color": getDayColor(dayNumber),
           },
         });
       });

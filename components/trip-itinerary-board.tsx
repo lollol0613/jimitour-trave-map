@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import TripRouteMap from "@/components/trip-route-map";
 import Link from "next/link";
 import TripOverviewMap from "@/components/trip-overview-map";
+import AdminOnly from "@/components/admin-only";
 
 import TripDayBoard, {
   DroppableDay,
@@ -23,6 +24,8 @@ type ItineraryPlace = {
   latitude: number;
   longitude: number;
   category: string;
+  status: "visited" | "wishlist";
+  memo: string | null;
 };
 
 type ItineraryDay = {
@@ -53,6 +56,23 @@ async function saveOrder(updatedItems: ItineraryPlace[]) {
   }
 }
 
+function getCategoryIcon(category: string) {
+  switch (category) {
+    case "accommodation":
+      return "🏨";
+    case "restaurant":
+      return "🍴";
+    case "attraction":
+      return "📍";
+    case "cafe":
+      return "☕";
+    case "shopping":
+      return "🛍";
+    default:
+      return "📌";
+  }
+}
+
 export default function TripItineraryBoard({
   tripId,
   days,
@@ -75,6 +95,8 @@ export default function TripItineraryBoard({
         longitude: item.longitude,
         dayNumber: day.dayNumber,
         position: item.position,
+        status: item.status,
+        memo: item.memo,
       };
     })
     .filter((place): place is NonNullable<typeof place> => place !== null);
@@ -223,69 +245,72 @@ export default function TripItineraryBoard({
                     </h3>
 
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/trips/${tripId}/days/${day.id}/add-place`}
-                        className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                      >
-                        + Place
-                      </Link>
+                      <AdminOnly>
+                        <Link
+                          href={`/trips/${tripId}/days/${day.id}/add-place`}
+                          className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                        >
+                          + Place
+                        </Link>
+                      </AdminOnly>
+                      <AdminOnly>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const confirmed = window.confirm(
+                              `Day ${day.dayNumber}을(를) 삭제할까요?\n이 Day에 들어 있는 장소 일정도 함께 삭제됩니다.`,
+                            );
 
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const confirmed = window.confirm(
-                            `Day ${day.dayNumber}을(를) 삭제할까요?\n이 Day에 들어 있는 장소 일정도 함께 삭제됩니다.`,
-                          );
-
-                          if (!confirmed) {
-                            return;
-                          }
-
-                          const { error } = await supabase
-                            .from("trip_days")
-                            .delete()
-                            .eq("id", day.id);
-
-                          if (error) {
-                            console.error("Failed to delete day:", error);
-                            return;
-                          }
-
-                          const remainingDays = days
-                            .filter((item) => item.id !== day.id)
-                            .sort((a, b) => a.dayNumber - b.dayNumber);
-
-                          for (
-                            let index = 0;
-                            index < remainingDays.length;
-                            index += 1
-                          ) {
-                            const currentDay = remainingDays[index];
-                            const newDayNumber = index + 1;
-
-                            const { error: updateError } = await supabase
-                              .from("trip_days")
-                              .update({
-                                day_number: newDayNumber,
-                                title: `Day ${newDayNumber}`,
-                              })
-                              .eq("id", currentDay.id);
-
-                            if (updateError) {
-                              console.error(
-                                "Failed to renumber day:",
-                                updateError,
-                              );
+                            if (!confirmed) {
                               return;
                             }
-                          }
 
-                          window.location.reload();
-                        }}
-                        className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                      >
-                        Delete Day
-                      </button>
+                            const { error } = await supabase
+                              .from("trip_days")
+                              .delete()
+                              .eq("id", day.id);
+
+                            if (error) {
+                              console.error("Failed to delete day:", error);
+                              return;
+                            }
+
+                            const remainingDays = days
+                              .filter((item) => item.id !== day.id)
+                              .sort((a, b) => a.dayNumber - b.dayNumber);
+
+                            for (
+                              let index = 0;
+                              index < remainingDays.length;
+                              index += 1
+                            ) {
+                              const currentDay = remainingDays[index];
+                              const newDayNumber = index + 1;
+
+                              const { error: updateError } = await supabase
+                                .from("trip_days")
+                                .update({
+                                  day_number: newDayNumber,
+                                  title: `Day ${newDayNumber}`,
+                                })
+                                .eq("id", currentDay.id);
+
+                              if (updateError) {
+                                console.error(
+                                  "Failed to renumber day:",
+                                  updateError,
+                                );
+                                return;
+                              }
+                            }
+
+                            window.location.reload();
+                          }}
+                          className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                        >
+                          Delete Day
+                        </button>
+                      </AdminOnly>
                     </div>
                   </div>
                   <p className="mt-2 text-sm text-zinc-500">
@@ -297,85 +322,120 @@ export default function TripItineraryBoard({
                       <ol className="mt-3 space-y-2">
                         {placesForDay.map((place) => (
                           <SortablePlace key={place.id} id={place.id}>
-                            <li className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
-                              <div className="min-w-0">
-                                <span className="mr-2 font-medium">
-                                  {place.position}.
-                                </span>
+                            <li className="rounded-lg bg-zinc-50 p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="shrink-0 font-medium">
+                                      {place.position}.
+                                    </span>
 
-                                <span>{place.name}</span>
-                              </div>
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {place.name}
+                                    </span>
 
-                              <button
-                                type="button"
-                                onPointerDown={(event) =>
-                                  event.stopPropagation()
-                                }
-                                onClick={async (event) => {
-                                  event.stopPropagation();
+                                    <span
+                                      className="shrink-0 text-sm"
+                                      title={
+                                        place.status === "visited"
+                                          ? "가본 곳"
+                                          : "가보고 싶은 곳"
+                                      }
+                                    >
+                                      {place.status === "visited" ? "🟢" : "🟡"}
+                                    </span>
 
-                                  const confirmed = window.confirm(
-                                    `"${place.name}"을(를) 이 Day에서 삭제할까요?`,
-                                  );
+                                    <span
+                                      className="shrink-0 text-base"
+                                      title={place.category}
+                                    >
+                                      {getCategoryIcon(place.category)}
+                                    </span>
+                                  </div>
 
-                                  if (!confirmed) {
-                                    return;
-                                  }
+                                  {place.memo && (
+                                    <p className="mt-1 pl-6 text-xs leading-5 text-zinc-500">
+                                      {place.memo}
+                                    </p>
+                                  )}
+                                </div>
+                                <AdminOnly>
+                                  <button
+                                    type="button"
+                                    onPointerDown={(event) =>
+                                      event.stopPropagation()
+                                    }
+                                    onClick={async (event) => {
+                                      event.stopPropagation();
 
-                                  const { error } = await supabase
-                                    .from("trip_places")
-                                    .delete()
-                                    .eq("id", place.id);
+                                      const confirmed = window.confirm(
+                                        `"${place.name}"을(를) 이 Day에서 삭제할까요?`,
+                                      );
 
-                                  if (error) {
-                                    console.error(
-                                      "Failed to delete place:",
-                                      error,
-                                    );
-                                    return;
-                                  }
+                                      if (!confirmed) {
+                                        return;
+                                      }
 
-                                  setItems((currentItems) => {
-                                    const remainingItems = currentItems
-                                      .filter((item) => item.id !== place.id)
-                                      .map((item) => {
-                                        if (
-                                          item.tripDayId !== place.tripDayId
-                                        ) {
-                                          return item;
-                                        }
+                                      const { error } = await supabase
+                                        .from("trip_places")
+                                        .delete()
+                                        .eq("id", place.id);
 
-                                        const sameDayItems = currentItems
+                                      if (error) {
+                                        console.error(
+                                          "Failed to delete place:",
+                                          error,
+                                        );
+                                        return;
+                                      }
+
+                                      setItems((currentItems) => {
+                                        const remainingItems = currentItems
                                           .filter(
-                                            (dayItem) =>
-                                              dayItem.tripDayId ===
-                                                place.tripDayId &&
-                                              dayItem.id !== place.id,
+                                            (item) => item.id !== place.id,
                                           )
-                                          .sort(
-                                            (a, b) => a.position - b.position,
-                                          );
+                                          .map((item) => {
+                                            if (
+                                              item.tripDayId !== place.tripDayId
+                                            ) {
+                                              return item;
+                                            }
 
-                                        const newPosition =
-                                          sameDayItems.findIndex(
-                                            (dayItem) => dayItem.id === item.id,
-                                          ) + 1;
+                                            const sameDayItems = currentItems
+                                              .filter(
+                                                (dayItem) =>
+                                                  dayItem.tripDayId ===
+                                                    place.tripDayId &&
+                                                  dayItem.id !== place.id,
+                                              )
+                                              .sort(
+                                                (a, b) =>
+                                                  a.position - b.position,
+                                              );
 
-                                        return {
-                                          ...item,
-                                          position: newPosition,
-                                        };
+                                            const newPosition =
+                                              sameDayItems.findIndex(
+                                                (dayItem) =>
+                                                  dayItem.id === item.id,
+                                              ) + 1;
+
+                                            return {
+                                              ...item,
+                                              position: newPosition,
+                                            };
+                                          });
+
+                                        saveOrder(remainingItems);
+
+                                        return remainingItems;
                                       });
-
-                                    saveOrder(remainingItems);
-
-                                    return remainingItems;
-                                  });
-                                }}
-                                className="shrink-0 text-xs font-medium text-red-600 hover:text-red-700"
-                              >
-                                삭제
-                              </button>
+                                    }}
+                                    className="shrink-0 text-xs font-medium text-red-600 hover:text-red-700"
+                                  >
+                                    삭제
+                                  </button>
+                                </AdminOnly>
+                              </div>
                             </li>
                           </SortablePlace>
                         ))}

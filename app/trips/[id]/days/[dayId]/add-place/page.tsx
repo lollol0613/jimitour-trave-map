@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
-import { getRatingLabel } from "@/lib/rating";
-import type { Place } from "@/types/place";
+import TripPlacePicker from "@/components/trip-place-picker";
 
 interface AddPlacePageProps {
   params: Promise<{
@@ -11,16 +10,6 @@ interface AddPlacePageProps {
     dayId: string;
   }>;
 }
-
-type CandidatePlace = {
-  id: string;
-  name: string;
-  category: Place["category"];
-  city: string | null;
-  rating: number | null;
-  latitude: number;
-  longitude: number;
-};
 
 async function addPlaceToDay(tripId: string, dayId: string, placeId: string) {
   "use server";
@@ -50,21 +39,10 @@ async function addPlaceToDay(tripId: string, dayId: string, placeId: string) {
   }
 }
 
-function getCategoryLabel(category: Place["category"]) {
-  switch (category) {
-    case "accommodation":
-      return "🏨 숙박";
-    case "restaurant":
-      return "🍴 맛집";
-    case "attraction":
-      return "📍 가볼 곳";
-    case "cafe":
-      return "☕ 카페";
-    case "shopping":
-      return "🛍 쇼핑";
-    default:
-      return "📌 기타";
-  }
+async function addPlaceAction(tripId: string, dayId: string, placeId: string) {
+  "use server";
+
+  await addPlaceToDay(tripId, dayId, placeId);
 }
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -174,13 +152,10 @@ export default async function AddPlacePage({ params }: AddPlacePageProps) {
         }
       : null;
 
-  let placesQuery = supabase
+  const { data: places, error: placesError } = await supabase
     .from("places")
     .select("id, name, category, city, rating, latitude, longitude")
-    .order("name", { ascending: true })
-    .returns<CandidatePlace[]>();
-
-  const { data: places, error: placesError } = await placesQuery;
+    .order("name", { ascending: true });
 
   if (placesError) {
     throw new Error(placesError.message);
@@ -202,13 +177,6 @@ export default async function AddPlacePage({ params }: AddPlacePageProps) {
         ...place,
         distanceKm,
       };
-    })
-    .filter((place) => {
-      if (!center) {
-        return true;
-      }
-
-      return place.distanceKm !== null && place.distanceKm <= 80;
     })
     .sort((a, b) => {
       if (a.distanceKm === null) return 1;
@@ -238,33 +206,13 @@ export default async function AddPlacePage({ params }: AddPlacePageProps) {
             등록된 장소가 없습니다.
           </p>
         ) : (
-          <ul className="space-y-3">
-            {nearbyPlaces.map((place) => (
-              <li
-                key={place.id}
-                className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
-              >
-                <h2 className="font-semibold">{place.name}</h2>
-
-                <p className="mt-1 text-sm text-zinc-600">
-                  {getCategoryLabel(place.category)}
-                  {place.city ? ` · ${place.city}` : ""}
-                  {` · ${getRatingLabel(place.rating)}`}
-                </p>
-                <form
-                  action={addPlaceToDay.bind(null, id, dayId, place.id)}
-                  className="mt-3"
-                >
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                  >
-                    이 Day에 추가
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
+          <TripPlacePicker
+            places={nearbyPlaces}
+            tripCity={trip.city}
+            tripId={id}
+            dayId={dayId}
+            addPlaceAction={addPlaceAction.bind(null, id, dayId)}
+          />
         )}
       </section>
     </main>

@@ -141,6 +141,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
     "Oamaru",
     "Tasman",
     "Kapiti Coast",
+    "Te A Nau",
   ];
 
   const cities = Array.from(

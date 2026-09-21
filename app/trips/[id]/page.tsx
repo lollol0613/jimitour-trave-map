@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import TripItineraryBoard from "@/components/trip-itinerary-board";
+import AdminOnly from "@/components/admin-only";
 
 interface TripPageProps {
   params: Promise<{
@@ -71,7 +72,9 @@ export default async function TripPage({ params }: TripPageProps) {
       city,
       rating,
       latitude,
-      longitude
+      longitude,
+      status,
+      memo
     )
   `,
     )
@@ -107,6 +110,8 @@ export default async function TripPage({ params }: TripPageProps) {
           latitude: place.latitude,
           longitude: place.longitude,
           category: place.category,
+          status: place.status,
+          memo: place.memo,
         },
       ];
     }) ?? [];
@@ -138,12 +143,14 @@ export default async function TripPage({ params }: TripPageProps) {
               <h1 className="text-3xl font-bold tracking-tight">{trip.name}</h1>
             </div>
 
-            <Link
-              href={`/trips/${trip.id}/edit`}
-              className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              일정 수정
-            </Link>
+            <AdminOnly>
+              <Link
+                href={`/trips/${trip.id}/edit`}
+                className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                일정 수정
+              </Link>
+            </AdminOnly>
           </div>
 
           <div className="mt-6 space-y-3 text-sm text-zinc-700">
@@ -168,14 +175,16 @@ export default async function TripPage({ params }: TripPageProps) {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">일정</h2>
 
-            <form action={addDay.bind(null, trip.id)}>
-              <button
-                type="submit"
-                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-              >
-                + Day
-              </button>
-            </form>
+            <AdminOnly>
+              <form action={addDay.bind(null, trip.id)}>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                >
+                  + Day
+                </button>
+              </form>
+            </AdminOnly>
           </div>
 
           <TripItineraryBoard
