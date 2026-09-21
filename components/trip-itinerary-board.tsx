@@ -57,7 +57,7 @@ async function saveOrder(updatedItems: ItineraryPlace[]) {
     position: item.position,
   }));
 
-  const { error } = await supabase.rpc("reorder_trip_places", {
+  const { error } = await supabase.rpc("reorder_trip_items", {
     p_updates: updates,
   });
 
@@ -77,7 +77,9 @@ function getCategoryIcon(category: string) {
     case "cafe":
       return "☕";
     case "shopping":
-      return "🛍";
+      return "🛒";
+    case "event":
+      return "🎆";
     default:
       return "📌";
   }
@@ -389,7 +391,7 @@ export default function TripItineraryBoard({
                                       }
 
                                       const { error } = await supabase
-                                        .from("trip_places")
+                                        .from("trip_items")
                                         .delete()
                                         .eq("id", place.id);
 
