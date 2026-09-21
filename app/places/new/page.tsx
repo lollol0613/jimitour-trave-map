@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 function formatPlaceName(value: string) {
   return value
@@ -19,6 +19,8 @@ function normalizeText(value: string) {
 
 async function createPlace(formData: FormData) {
   "use server";
+
+  const supabase = await createServerSupabaseClient();
 
   const name = formatPlaceName(String(formData.get("name") ?? ""));
   const category = String(formData.get("category") ?? "");

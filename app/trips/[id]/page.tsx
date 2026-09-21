@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 import TripItineraryBoard from "@/components/trip-itinerary-board";
 import AdminOnly from "@/components/admin-only";
 
@@ -13,6 +14,8 @@ interface TripPageProps {
 
 async function addDay(tripId: string) {
   "use server";
+
+  const supabase = await createServerSupabaseClient();
 
   const { data: existingDays, error: readError } = await supabase
     .from("trip_days")

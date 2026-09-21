@@ -7,6 +7,10 @@ import TravelMap from "@/components/travel-map";
 import { getRatingLabel } from "@/lib/rating";
 import type { Place } from "@/types/place";
 import { getGoogleMapsSearchUrl } from "@/lib/google-maps";
+import AdminOnly from "@/components/admin-only";
+import { createBrowserSupabaseClient } from "@/lib/supabase-client";
+
+const supabase = createBrowserSupabaseClient();
 
 type PlaceListItem = Pick<
   Place,
@@ -323,8 +327,43 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
               <li
                 key={place.id}
                 onClick={() => setSelectedPlaceId(place.id)}
-                className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+                className="relative cursor-pointer rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
               >
+                <AdminOnly>
+                  <button
+                    type="button"
+                    onClick={async (event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+
+                      const confirmed = window.confirm(
+                        `"${place.name}"을(를) 완전히 삭제할까요?\n일정에 추가되어 있다면 해당 일정에서도 함께 제거됩니다.`,
+                      );
+
+                      if (!confirmed) {
+                        return;
+                      }
+
+                      const { error } = await supabase
+                        .from("places")
+                        .delete()
+                        .eq("id", place.id);
+
+                      if (error) {
+                        console.error("Failed to delete place:", error);
+                        alert("삭제 중 오류가 발생했습니다.");
+                        return;
+                      }
+
+                      window.location.reload();
+                    }}
+                    className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm text-zinc-500 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    aria-label={`${place.name} 삭제`}
+                    title="삭제"
+                  >
+                    ×
+                  </button>
+                </AdminOnly>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold">{place.name}</h3>

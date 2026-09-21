@@ -1,10 +1,8 @@
 "use client";
 
-"use client";
-
 import { useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
-import { supabase } from "@/lib/supabase";
+import { createBrowserSupabaseClient } from "@/lib/supabase-client";
 import TripRouteMap from "@/components/trip-route-map";
 import Link from "next/link";
 import TripOverviewMap from "@/components/trip-overview-map";
@@ -14,6 +12,8 @@ import TripDayBoard, {
   DroppableDay,
   SortablePlace,
 } from "@/components/trip-day-board";
+
+const supabase = createBrowserSupabaseClient();
 
 type ItineraryPlace = {
   id: string;
@@ -338,8 +338,8 @@ export default function TripItineraryBoard({
                                       className="shrink-0 text-sm"
                                       title={
                                         place.status === "visited"
-                                          ? "가본 곳"
-                                          : "가보고 싶은 곳"
+                                          ? "지미 Pick"
+                                          : "Wishlist"
                                       }
                                     >
                                       {place.status === "visited" ? "🟢" : "🟡"}

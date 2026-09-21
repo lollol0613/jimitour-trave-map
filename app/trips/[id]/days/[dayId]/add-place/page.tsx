@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 import TripPlacePicker from "@/components/trip-place-picker";
 
 interface AddPlacePageProps {
@@ -13,6 +14,8 @@ interface AddPlacePageProps {
 
 async function addPlaceToDay(tripId: string, dayId: string, placeId: string) {
   "use server";
+
+  const supabase = await createServerSupabaseClient();
 
   const { data: lastItem, error: readError } = await supabase
     .from("trip_places")

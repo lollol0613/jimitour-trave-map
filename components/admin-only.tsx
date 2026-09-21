@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-
-import { supabase } from "@/lib/supabase";
+import { createBrowserSupabaseClient } from "@/lib/supabase-client";
 
 type AdminOnlyProps = {
   children: ReactNode;
 };
 
 export default function AdminOnly({ children }: AdminOnlyProps) {
+  const supabase = createBrowserSupabaseClient();
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checked, setChecked] = useState(false);
 

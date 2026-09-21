@@ -39,6 +39,8 @@ export default function TripPlacePicker({
     | "other"
   >("all");
 
+  const [addedPlaceIds, setAddedPlaceIds] = useState<string[]>([]);
+
   const visiblePlaces = places.filter((place) => {
     const matchesCategory = category === "all" || place.category === category;
 
@@ -158,14 +160,21 @@ export default function TripPlacePicker({
             <form
               action={async () => {
                 await addPlaceAction(place.id);
+
+                setAddedPlaceIds((prev) =>
+                  prev.includes(place.id) ? prev : [...prev, place.id],
+                );
               }}
               className="mt-3"
             >
               <button
                 type="submit"
-                className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                disabled={addedPlaceIds.includes(place.id)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-default disabled:border-green-200 disabled:bg-green-50 disabled:text-green-700"
               >
-                이 Day에 추가
+                {addedPlaceIds.includes(place.id)
+                  ? "✓ 추가 완료"
+                  : "이 Day에 추가"}
               </button>
             </form>
           </div>

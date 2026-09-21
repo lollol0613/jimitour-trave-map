@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 interface EditTripPageProps {
   params: Promise<{
@@ -24,6 +25,8 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
 
   async function updateTrip(formData: FormData) {
     "use server";
+
+    const supabase = await createServerSupabaseClient();
 
     const name = String(formData.get("name") ?? "").trim();
     const city = String(formData.get("city") ?? "").trim();
