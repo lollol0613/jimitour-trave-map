@@ -314,7 +314,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
         </section>
       </div>
 
-      <aside className="xl:max-h-[680px] xl:overflow-y-auto xl:pr-2">
+      <aside className="xl:max-h-[760px] xl:overflow-y-auto xl:pr-2">
         <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
 
         {filteredPlaces.length === 0 ? (
@@ -357,7 +357,7 @@ export default function PlaceBrowser({ places }: PlaceBrowserProps) {
 
                       window.location.reload();
                     }}
-                    className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm text-zinc-500 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    className="absolute -right-1 -top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 bg-white/95 text-sm text-zinc-500 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                     aria-label={`${place.name} 삭제`}
                     title="삭제"
                   >
