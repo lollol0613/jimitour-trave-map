@@ -152,6 +152,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
     "Hastings",
     "Napier",
     "Tauranga",
+    "Wairarapa",
   ];
 
   const SOUTH_ISLAND_CITIES = [
@@ -259,8 +260,9 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
   });
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl gap-8 xl:max-w-none xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
-      <div className="min-w-0">
+    <div className="mx-auto grid w-full gap-6 xl:grid-cols-[260px_minmax(0,1fr)_360px]">
+      <aside className="h-fit rounded-xl border border-zinc-200 bg-white p-4 shadow-sm xl:sticky xl:top-6">
+        <h2 className="mb-4 text-xl font-semibold">필터</h2>
         <div className="mb-5">
           <input
             type="text"
@@ -412,7 +414,8 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
             </div>
           </div>
         )}
-
+      </aside>
+      <div className="min-w-0">
         <section aria-labelledby="map-heading">
           <TravelMap
             places={filteredPlaces.filter(

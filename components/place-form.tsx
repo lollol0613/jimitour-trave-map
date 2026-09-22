@@ -1,0 +1,137 @@
+import { createPlace } from "@/app/actions/place";
+
+export default function PlaceForm() {
+  return (
+    <form
+      action={createPlace}
+      className="space-y-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
+    >
+      <div>
+        <label className="mb-2 block text-sm font-medium">장소명</label>
+        <input
+          type="text"
+          name="name"
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          placeholder="예: Cordis Auckland"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">카테고리</label>
+        <select
+          name="category"
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          defaultValue="accommodation"
+        >
+          <option value="accommodation">🏨 숙박</option>
+          <option value="restaurant">🍴 맛집</option>
+          <option value="attraction">📍 가볼 곳</option>
+          <option value="cafe">☕ 카페</option>
+          <option value="shopping">🛍 쇼핑</option>
+          <option value="other">📌 기타</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">도시</label>
+        <input
+          type="text"
+          name="city"
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          placeholder="예: Auckland, Rotorua, Taupo"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">상태</label>
+        <select
+          name="status"
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          defaultValue="wishlist"
+        >
+          <option value="wishlist">🟡 가보고 싶은 곳</option>
+          <option value="visited">🟢 다녀온 곳</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">주소</label>
+        <input
+          type="text"
+          name="address"
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          placeholder="예: 83 Symonds Street, Auckland"
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium">위도</label>
+          <input
+            type="number"
+            step="any"
+            name="latitude"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+            placeholder="-36.8567"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">경도</label>
+          <input
+            type="number"
+            step="any"
+            name="longitude"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+            placeholder="174.7645"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">평점</label>
+        <select
+          name="rating"
+          defaultValue=""
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+        >
+          <option value="">평점 없음</option>
+          <option value="0">🚫 절대 가지 말기</option>
+          <option value="1">👎 비추</option>
+          <option value="2">😕 애매함</option>
+          <option value="3">🙂 쏘쏘</option>
+          <option value="4">👍 평타</option>
+          <option value="4.5">⭐ 추천</option>
+          <option value="5">🔥 개추</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">이미지 URL</label>
+        <input
+          type="url"
+          name="image_url"
+          placeholder="https://..."
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">메모</label>
+        <textarea
+          name="memo"
+          rows={4}
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          placeholder="이 장소에 대한 간단한 메모"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+      >
+        장소 저장
+      </button>
+    </form>
+  );
+}

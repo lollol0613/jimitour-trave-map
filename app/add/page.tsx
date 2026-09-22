@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import PlaceForm from "@/components/place-form";
+import EventForm from "@/components/event-form";
 
 type AddType = "place" | "event";
 
@@ -47,11 +49,7 @@ export default function AddPage() {
         </div>
 
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-          {addType === "place" ? (
-            <p className="text-zinc-600">여기에 장소 추가 폼이 들어갑니다.</p>
-          ) : (
-            <p className="text-zinc-600">여기에 이벤트 추가 폼이 들어갑니다.</p>
-          )}
+          {addType === "place" ? <PlaceForm /> : <EventForm />}
         </div>
       </section>
     </main>

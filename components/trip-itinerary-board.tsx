@@ -328,7 +328,7 @@ export default function TripItineraryBoard({
                     </div>
                   </div>
                   <p className="mt-2 text-sm text-zinc-500">
-                    {placesForDay.length}개 장소
+                    {placesForDay.length}개 일정
                   </p>
 
                   {placesForDay.length > 0 && (
@@ -348,16 +348,20 @@ export default function TripItineraryBoard({
                                       {place.name}
                                     </span>
 
-                                    <span
-                                      className="shrink-0 text-sm"
-                                      title={
-                                        place.status === "visited"
-                                          ? "지미 Pick"
-                                          : "Wishlist"
-                                      }
-                                    >
-                                      {place.status === "visited" ? "🟢" : "🟡"}
-                                    </span>
+                                    {place.itemType === "place" && (
+                                      <span
+                                        className="shrink-0 text-sm"
+                                        title={
+                                          place.status === "visited"
+                                            ? "지미 Pick"
+                                            : "Wishlist"
+                                        }
+                                      >
+                                        {place.status === "visited"
+                                          ? "🟢"
+                                          : "🟡"}
+                                      </span>
+                                    )}
 
                                     <span
                                       className="shrink-0 text-base"
@@ -366,6 +370,22 @@ export default function TripItineraryBoard({
                                       {getCategoryIcon(place.category)}
                                     </span>
                                   </div>
+
+                                  {place.itemType === "event" && (
+                                    <p className="mt-1 pl-6 text-xs font-medium text-blue-600">
+                                      {place.startDate}
+                                      {place.endDate &&
+                                      place.endDate !== place.startDate
+                                        ? ` ~ ${place.endDate}`
+                                        : ""}
+
+                                      {place.eventMonth && (
+                                        <span className="ml-2 text-zinc-500">
+                                          · 매년 {place.eventMonth}월
+                                        </span>
+                                      )}
+                                    </p>
+                                  )}
 
                                   {place.memo && (
                                     <p className="mt-1 pl-6 text-xs leading-5 text-zinc-500">
