@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { getRatingLabel } from "@/lib/rating";
 import type { Place } from "@/types/place";
 import { redirect } from "next/navigation";
@@ -15,6 +15,7 @@ interface EditPlacePageProps {
 async function updatePlace(id: string, formData: FormData) {
   "use server";
 
+  const supabase = await createServerSupabaseClient();
   const name = String(formData.get("name") ?? "");
   const category = String(formData.get("category") ?? "");
   const city = String(formData.get("city") ?? "");
@@ -69,6 +70,8 @@ async function updatePlace(id: string, formData: FormData) {
 
 export default async function EditPlacePage({ params }: EditPlacePageProps) {
   const { id } = await params;
+
+  const supabase = await createServerSupabaseClient();
 
   const { data: place, error } = await supabase
     .from("places")

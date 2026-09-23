@@ -266,8 +266,8 @@ export default function TravelMap({
     <div
       ref={mapContainerRef}
       role="region"
-      aria-label="Auckland 여행 지도"
-      className="h-[420px] w-full overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 shadow-sm"
+      aria-label="뉴질랜드 지도"
+      className="h-[420px] w-full overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 shadow-sm xl:h-[680px]"
     />
   );
 }

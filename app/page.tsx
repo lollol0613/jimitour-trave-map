@@ -70,9 +70,11 @@ export default async function Home() {
       <section className="mx-auto w-full max-w-7xl">
         <header className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <p className="mb-2 text-sm font-medium text-blue-600">Jimitour</p>
+            <p className="mb-2 text-sm font-medium text-blue-600">
+              고객 맞춤형 쏘카인드 지미투어
+            </p>
             <h1 className="text-3xl font-bold tracking-tight">
-              New Zealand 여행 지도
+              웰컴투뉴질랜드
             </h1>
           </div>
 
@@ -91,7 +93,9 @@ export default async function Home() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600">추천 일정</p>
-                <h2 className="text-xl font-semibold">뉴질랜드 여행 코스</h2>
+                <h2 className="text-xl font-semibold">
+                  지미가 추천하는 뉴질랜드 여행 코스
+                </h2>
               </div>
 
               <AdminOnly>

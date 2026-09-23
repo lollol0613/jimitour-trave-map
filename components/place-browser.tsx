@@ -91,10 +91,36 @@ function getCategoryLabel(category: FilterCategory) {
 }
 
 export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
-  const [selectedCategory, setSelectedCategory] =
-    useState<FilterCategory>("all");
+  const [selectedCategories, setSelectedCategories] = useState<
+    Exclude<FilterCategory, "all">[]
+  >([]);
 
-  const [selectedCity, setSelectedCity] = useState<string>("all");
+  function toggleCategory(category: Exclude<FilterCategory, "all">) {
+    setSelectedCategories((current) =>
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category],
+    );
+  }
+
+  function resetFilters() {
+    setSearchQuery("");
+    setSelectedStatuses([]);
+    setSelectedIsland("all");
+    setSelectedCities([]);
+    setSelectedCategories([]);
+    setSelectedMonths([]);
+  }
+
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+
+  function toggleCity(city: string) {
+    setSelectedCities((current) =>
+      current.includes(city)
+        ? current.filter((item) => item !== city)
+        : [...current, city],
+    );
+  }
 
   const [selectedIsland, setSelectedIsland] = useState<
     "all" | "north" | "south"
@@ -102,13 +128,29 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [selectedStatus, setSelectedStatus] = useState<
-    "all" | "visited" | "wishlist"
-  >("all");
+  const [selectedStatuses, setSelectedStatuses] = useState<
+    ("visited" | "wishlist")[]
+  >([]);
+
+  function toggleStatus(status: "visited" | "wishlist") {
+    setSelectedStatuses((current) =>
+      current.includes(status)
+        ? current.filter((item) => item !== status)
+        : [...current, status],
+    );
+  }
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
-  const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+
+  function toggleMonth(month: number) {
+    setSelectedMonths((current) =>
+      current.includes(month)
+        ? current.filter((item) => item !== month)
+        : [...current, month],
+    );
+  }
 
   const PAGE_SIZE = 20;
 
@@ -117,11 +159,11 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [
-    selectedCity,
-    selectedCategory,
+    selectedCities,
+    selectedCategories,
     selectedIsland,
-    selectedStatus,
-    selectedMonth,
+    selectedStatuses,
+    selectedMonths,
     searchQuery,
   ]);
 
@@ -153,6 +195,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
     "Napier",
     "Tauranga",
     "Wairarapa",
+    "Hampton Downs",
   ];
 
   const SOUTH_ISLAND_CITIES = [
@@ -229,21 +272,28 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
 
   const filteredPlaces = combinedItems.filter((place) => {
     const matchesCategory =
-      selectedCategory === "all" || place.category === selectedCategory;
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(
+        place.category as Exclude<FilterCategory, "all">,
+      );
 
-    const matchesCity = selectedCity === "all" || place.city === selectedCity;
+    const matchesCity =
+      selectedCities.length === 0 ||
+      (place.city !== null && selectedCities.includes(place.city));
 
     const matchesStatus =
       place.itemType === "event"
         ? true
-        : selectedStatus === "all" || place.status === selectedStatus;
+        : selectedStatuses.length === 0 ||
+          (place.status !== null && selectedStatuses.includes(place.status));
 
     const query = searchQuery.trim().toLowerCase();
 
     const matchesMonth =
       place.itemType !== "event" ||
-      selectedMonth === "all" ||
-      place.event_month === selectedMonth;
+      selectedMonths.length === 0 ||
+      (place.event_month !== null &&
+        selectedMonths.includes(place.event_month));
 
     const matchesSearch =
       query === "" ||
@@ -261,154 +311,185 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
 
   return (
     <div className="mx-auto grid w-full gap-6 xl:grid-cols-[260px_minmax(0,1fr)_360px]">
-      <aside className="h-fit rounded-xl border border-zinc-200 bg-white p-4 shadow-sm xl:sticky xl:top-6">
-        <h2 className="mb-4 text-xl font-semibold">필터</h2>
-        <div className="mb-5">
+      <aside className="h-fit rounded-xl border border-zinc-200 bg-white p-5 shadow-sm xl:sticky xl:top-6">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">필터</h2>
+
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="text-xs font-medium text-zinc-500 hover:text-blue-600"
+          >
+            초기화
+          </button>
+        </div>
+
+        {/* 검색 */}
+        <div className="border-b border-zinc-200 pb-5">
+          <label className="mb-2 block text-sm font-semibold text-zinc-900">
+            검색
+          </label>
+
           <input
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="장소 이름 또는 도시 검색"
-            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm outline-none focus:border-blue-500"
+            placeholder="장소, 이벤트, 도시"
+            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
           />
         </div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {[
-            { value: "all", label: "전체 상태" },
-            { value: "wishlist", label: "🟡 Wishlist" },
-            { value: "visited", label: "🟢 지미 Pick" },
-          ].map((status) => {
-            const selected = status.value === selectedStatus;
 
-            return (
-              <button
-                key={status.value}
-                type="button"
-                onClick={() =>
-                  setSelectedStatus(
-                    status.value as "all" | "visited" | "wishlist",
-                  )
-                }
-                className={
-                  selected
-                    ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                }
-              >
-                {status.label}
-              </button>
-            );
-          })}
+        {/* 상태 */}
+        <div className="border-b border-zinc-200 py-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">상태</h3>
+
+          <div className="space-y-2.5">
+            {[
+              { value: "wishlist", label: "🟡 Wishlist" },
+              { value: "visited", label: "🟢 지미Pick" },
+            ].map((status) => {
+              const value = status.value as "visited" | "wishlist";
+              const checked = selectedStatuses.includes(value);
+
+              return (
+                <label
+                  key={value}
+                  className="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleStatus(value)}
+                    className="h-4 w-4 rounded border-zinc-300"
+                  />
+
+                  <span>{status.label}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
-        <div className="mb-5">
-          <h2 className="mb-3 text-xl font-semibold">지역 선택</h2>
 
-          <div className="mb-3 flex flex-wrap gap-2">
+        {/* Island */}
+        <div className="border-b border-zinc-200 py-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Island</h3>
+
+          <div className="space-y-2.5">
             {[
               { value: "all", label: "All" },
               { value: "north", label: "North Island" },
               { value: "south", label: "South Island" },
             ].map((island) => {
-              const selected = island.value === selectedIsland;
+              const checked = selectedIsland === island.value;
 
               return (
-                <button
+                <label
                   key={island.value}
-                  type="button"
-                  onClick={() => {
-                    setSelectedIsland(
-                      island.value as "all" | "north" | "south",
-                    );
-                    setSelectedCity("all");
-                  }}
-                  className={
-                    selected
-                      ? "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                      : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                  }
+                  className="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-700"
                 >
-                  {island.label}
-                </button>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      setSelectedIsland(
+                        island.value as "all" | "north" | "south",
+                      );
+                      setSelectedCities([]);
+                    }}
+                    className="h-4 w-4 rounded border-zinc-300"
+                  />
+
+                  <span>{island.label}</span>
+                </label>
               );
             })}
           </div>
+        </div>
 
-          <div className="min-w-0 overflow-x-auto pb-2">
-            <div className="flex w-max gap-2">
-              {["all", ...visibleCities].map((city) => {
-                const selected = city === selectedCity;
+        {/* 도시 */}
+        <div className="border-b border-zinc-200 py-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">도시</h3>
 
-                return (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => setSelectedCity(city)}
-                    className={
-                      selected
-                        ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-                        : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                    }
-                  >
-                    {city === "all" ? "All" : city}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="max-h-44 space-y-2.5 overflow-y-auto pr-2">
+            {visibleCities.map((city) => {
+              const checked = selectedCities.includes(city);
+
+              return (
+                <label
+                  key={city}
+                  className="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleCity(city)}
+                    className="h-4 w-4 rounded border-zinc-300"
+                  />
+
+                  <span>{city}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {filters.map((filter) => {
-            const selected = filter.value === selectedCategory;
+        {/* 카테고리 */}
+        <div className="border-b border-zinc-200 py-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">카테고리</h3>
 
-            return (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setSelectedCategory(filter.value)}
-                className={
-                  selected
-                    ? "rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                }
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
+          <div className="space-y-2.5">
+            {filters
+              .filter((filter) => filter.value !== "all")
+              .map((filter) => {
+                const value = filter.value as Exclude<FilterCategory, "all">;
 
-        {selectedCategory === "event" && (
-          <div className="mb-6 min-w-0 overflow-x-auto pb-2">
-            <div className="flex w-max gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedMonth("all")}
-                className={
-                  selectedMonth === "all"
-                    ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-                    : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                }
-              >
-                전체 월
-              </button>
-
-              {Array.from({ length: 12 }, (_, index) => {
-                const month = index + 1;
+                const checked = selectedCategories.includes(value);
 
                 return (
-                  <button
-                    key={month}
-                    type="button"
-                    onClick={() => setSelectedMonth(month)}
-                    className={
-                      selectedMonth === month
-                        ? "shrink-0 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-                        : "shrink-0 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                    }
+                  <label
+                    key={filter.value}
+                    className="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-700"
                   >
-                    {month}월
-                  </button>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleCategory(value)}
+                      className="h-4 w-4 rounded border-zinc-300"
+                    />
+
+                    <span>{filter.label}</span>
+                  </label>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* 이벤트 월 */}
+        {selectedCategories.includes("event") && (
+          <div className="pt-5">
+            <h3 className="mb-3 text-sm font-semibold text-zinc-900">
+              이벤트 월
+            </h3>
+
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+              {Array.from({ length: 12 }, (_, index) => {
+                const month = index + 1;
+                const checked = selectedMonths.includes(month);
+
+                return (
+                  <label
+                    key={month}
+                    className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleMonth(month)}
+                      className="h-4 w-4 rounded border-zinc-300"
+                    />
+
+                    <span>{month}월</span>
+                  </label>
                 );
               })}
             </div>
@@ -423,13 +504,15 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                 item.itemType === "place",
             )}
             selectedPlaceId={selectedPlaceId}
-            selectedCity={selectedCity}
+            selectedCity={
+              selectedCities.length === 1 ? selectedCities[0] : "all"
+            }
           />
         </section>
       </div>
 
-      <aside className="xl:max-h-[760px] xl:overflow-y-auto xl:pr-2">
-        <h2 className="mb-4 text-xl font-semibold">여행 장소 목록</h2>
+      <aside className="min-w-0 xl:max-h-[680px] xl:overflow-y-auto xl:pr-2">
+        <h2 className="mb-4 text-xl font-semibold">목록</h2>
 
         {filteredPlaces.length === 0 ? (
           <p className="rounded-xl border border-zinc-200 bg-white p-5 text-zinc-600">
@@ -500,11 +583,18 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                           </span>
                         )}
                       </p>
-                    ) : (
+                    ) : place.status === "visited" ? (
                       <p className="mt-1 text-sm text-zinc-500">
-                        {getRatingLabel(place.rating)}
+                        🟢 지미픽
+                        {place.rating !== null && (
+                          <span className="ml-2">
+                            · {getRatingLabel(place.rating)}
+                          </span>
+                        )}
                       </p>
-                    )}
+                    ) : place.status === "wishlist" ? (
+                      <p className="mt-1 text-sm text-zinc-500">🟡 Wishlist</p>
+                    ) : null}
                   </div>
 
                   {place.image_url && (
