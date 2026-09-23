@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { getRatingLabel } from "@/lib/rating";
 import type { Place } from "@/types/place";
 import { redirect } from "next/navigation";
+import sharp from "sharp";
 
 interface EditPlacePageProps {
   params: Promise<{
@@ -24,8 +25,49 @@ async function updatePlace(id: string, formData: FormData) {
   const memo = String(formData.get("memo") ?? "");
   const imageUrl = String(formData.get("image_url") ?? "");
 
+  const imageFile = formData.get("image_file");
+
+  let finalImageUrl = imageUrl || null;
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const inputBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+    const webpBuffer = await sharp(inputBuffer)
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 82,
+      })
+      .toBuffer();
+
+    const fileName = `${crypto.randomUUID()}.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("place-image")
+      .upload(fileName, webpBuffer, {
+        contentType: "image/webp",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(`이미지 업로드 실패: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("place-image")
+      .getPublicUrl(fileName);
+
+    finalImageUrl = publicUrlData.publicUrl;
+  }
+
   const latitude = Number(formData.get("latitude"));
   const longitude = Number(formData.get("longitude"));
+
+  const tags = formData.getAll("tags").map((value) => String(value));
 
   const ratingValue = formData.get("rating");
   const rating =
@@ -45,7 +87,8 @@ async function updatePlace(id: string, formData: FormData) {
       latitude,
       longitude,
       rating,
-      image_url: imageUrl || null,
+      image_url: finalImageUrl,
+      tags,
     })
     .eq("id", id)
     .select("id, rating");
@@ -148,6 +191,22 @@ export default async function EditPlacePage({ params }: EditPlacePageProps) {
           </div>
 
           <div>
+            <label className="mb-2 block text-sm font-medium">태그</label>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                name="tags"
+                value="Baby"
+                defaultChecked={place.tags?.includes("Baby") ?? false}
+                className="h-4 w-4 rounded border-zinc-300"
+              />
+
+              <span>Baby</span>
+            </label>
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-medium">주소</label>
             <input
               type="text"
@@ -223,6 +282,31 @@ export default async function EditPlacePage({ params }: EditPlacePageProps) {
               placeholder="https://..."
               className="w-full rounded-lg border border-zinc-300 px-3 py-2"
             />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              이미지 업로드
+            </label>
+
+            <input
+              name="image_file"
+              type="file"
+              accept="image/*"
+              className="block w-full text-sm text-zinc-600
+      file:mr-4
+      file:rounded-md
+      file:border-0
+      file:bg-zinc-100
+      file:px-4
+      file:py-2
+      file:text-sm
+      file:font-medium
+      hover:file:bg-zinc-200"
+            />
+
+            <p className="mt-1 text-xs text-zinc-500">
+              새 이미지를 업로드하면 기존 이미지 URL보다 우선 적용됩니다.
+            </p>
           </div>
 
           <button

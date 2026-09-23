@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import sharp from "sharp";
 
 interface EditEventPageProps {
   params: Promise<{
@@ -24,7 +25,48 @@ async function updateEvent(eventId: string, formData: FormData) {
   const address = String(formData.get("address") || "").trim() || null;
   const websiteUrl = String(formData.get("website_url") || "").trim() || null;
   const imageUrl = String(formData.get("image_url") || "").trim() || null;
+
+  const imageFile = formData.get("image_file");
+
+  let finalImageUrl = imageUrl || null;
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const inputBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+    const webpBuffer = await sharp(inputBuffer)
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 82,
+      })
+      .toBuffer();
+
+    const fileName = `${crypto.randomUUID()}.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("place-image")
+      .upload(fileName, webpBuffer, {
+        contentType: "image/webp",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(`이미지 업로드 실패: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("place-image")
+      .getPublicUrl(fileName);
+
+    finalImageUrl = publicUrlData.publicUrl;
+  }
+
   const memo = String(formData.get("memo") || "").trim() || null;
+  const tags = formData.getAll("tags").map((value) => String(value));
 
   const latitudeValue = String(formData.get("latitude") || "").trim();
   const longitudeValue = String(formData.get("longitude") || "").trim();
@@ -45,8 +87,9 @@ async function updateEvent(eventId: string, formData: FormData) {
       latitude,
       longitude,
       website_url: websiteUrl,
-      image_url: imageUrl,
+      image_url: finalImageUrl,
       memo,
+      tags,
     })
     .eq("id", eventId);
 
@@ -159,6 +202,22 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
           </div>
 
           <div>
+            <label className="mb-2 block text-sm font-medium">태그</label>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                name="tags"
+                value="Baby"
+                defaultChecked={event.tags?.includes("Baby") ?? false}
+                className="h-4 w-4 rounded border-zinc-300"
+              />
+
+              <span>Baby</span>
+            </label>
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-medium">주소</label>
             <input
               name="address"
@@ -213,6 +272,32 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
               defaultValue={event.image_url ?? ""}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2"
             />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              이미지 업로드
+            </label>
+
+            <input
+              name="image_file"
+              type="file"
+              accept="image/*"
+              className="block w-full text-sm text-zinc-600
+      file:mr-4
+      file:rounded-md
+      file:border-0
+      file:bg-zinc-100
+      file:px-4
+      file:py-2
+      file:text-sm
+      file:font-medium
+      hover:file:bg-zinc-200"
+            />
+
+            <p className="mt-1 text-xs text-zinc-500">
+              새 이미지를 업로드하면 기존 이미지 URL보다 우선 적용됩니다.
+            </p>
           </div>
 
           <div>

@@ -21,6 +21,8 @@ type MapPlace = Pick<
   | "rating"
   | "memo"
   | "image_url"
+  | "city"
+  | "tags"
 >;
 
 function getCategoryLabel(category: Place["category"]) {
@@ -59,8 +61,7 @@ function getCategoryIcon(category: Place["category"]) {
 
 interface TravelMapProps {
   places: MapPlace[];
-  selectedPlaceId: string | null;
-  selectedCity: string;
+  selectedPlaceId?: string | null;
 }
 
 function createPopupContent(place: MapPlace) {
@@ -120,30 +121,7 @@ function createPopupContent(place: MapPlace) {
   return content;
 }
 
-const CITY_CENTERS: Record<string, [number, number]> = {
-  Auckland: [174.7633, -36.8485],
-  Hamilton: [175.2793, -37.787],
-  Rotorua: [176.2497, -38.1368],
-  Taupo: [176.0702, -38.6857],
-  Wellington: [174.7762, -41.2866],
-  Whangarei: [174.3237, -35.7251],
-  "New Plymouth": [174.0632, -39.0556],
-
-  Christchurch: [172.6362, -43.5321],
-  Queenstown: [168.6626, -45.0312],
-  Wanaka: [169.1321, -44.6967],
-  Cromwell: [169.2004, -45.0384],
-  Tekapo: [170.4806, -44.0047],
-  Twizel: [170.0986, -44.2594],
-  "Milford Sound": [167.9256, -44.6714],
-  "Mt.Cook": [170.0967, -43.734],
-};
-
-export default function TravelMap({
-  places,
-  selectedPlaceId,
-  selectedCity,
-}: TravelMapProps) {
+export default function TravelMap({ places, selectedPlaceId }: TravelMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<Record<string, maplibregl.Marker>>({});
@@ -174,6 +152,50 @@ export default function TravelMap({
       map.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    const visiblePlaces = places.filter((place) => {
+      const latitude = Number(place.latitude);
+      const longitude = Number(place.longitude);
+
+      return Number.isFinite(latitude) && Number.isFinite(longitude);
+    });
+
+    if (visiblePlaces.length === 0) {
+      return;
+    }
+
+    if (visiblePlaces.length === 1) {
+      map.flyTo({
+        center: [
+          Number(visiblePlaces[0].longitude),
+          Number(visiblePlaces[0].latitude),
+        ],
+        zoom: 12,
+        essential: true,
+      });
+
+      return;
+    }
+
+    const bounds = new maplibregl.LngLatBounds();
+
+    visiblePlaces.forEach((place) => {
+      bounds.extend([Number(place.longitude), Number(place.latitude)]);
+    });
+
+    map.fitBounds(bounds, {
+      padding: 80,
+      maxZoom: 12,
+      duration: 800,
+    });
+  }, [places]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -239,28 +261,6 @@ export default function TravelMap({
 
     marker.togglePopup();
   }, [selectedPlaceId]);
-
-  useEffect(() => {
-    if (!mapRef.current) {
-      return;
-    }
-
-    if (selectedCity === "all") {
-      return;
-    }
-
-    const center = CITY_CENTERS[selectedCity];
-
-    if (!center) {
-      return;
-    }
-
-    mapRef.current.flyTo({
-      center,
-      zoom: 11,
-      essential: true,
-    });
-  }, [selectedCity]);
 
   return (
     <div

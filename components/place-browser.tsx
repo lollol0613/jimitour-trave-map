@@ -183,57 +183,134 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
 
   const NORTH_ISLAND_CITIES = [
     "Auckland",
-    "Cambridge",
-    "Coromandel",
-    "Hamilton",
-    "Karangahake",
-    "Kerikeri",
-    "Matamata",
+    "Albany",
+    "Orewa",
+    "Whangaparaoa",
+    "Warkworth",
+    "Matakana",
+    "Wellsford",
+    "Helensville",
     "Muriwai",
-    "New Plymouth",
-    "Northland",
-    "Paeroa",
-    "Pokeno",
-    "Putaruru",
-    "Rotorua",
-    "Taupo",
-    "Waikato",
-    "Waitomo",
+    "Piha",
     "Waiuku",
-    "Wellington",
-    "Whangarei",
-    "Northland",
-    "Tongariro",
-    "Raglan",
-    "Hastings",
-    "Napier",
-    "Tauranga",
-    "Wairarapa",
+    "Pukekohe",
     "Hampton Downs",
+    "Pokeno",
+    "Hamilton",
+    "Cambridge",
+    "Raglan",
+    "Te Awamutu",
+    "Matamata",
+    "Morrinsville",
+    "Putaruru",
+    "Tokoroa",
+    "Waitomo",
+    "Otorohanga",
+    "Te Kuiti",
+    "Taupo",
+    "Turangi",
+    "Rotorua",
+    "Tauranga",
+    "Mount Maunganui",
+    "Papamoa",
+    "Whakatane",
+    "Opotiki",
+    "Gisborne",
+    "Napier",
+    "Hastings",
+    "Havelock North",
+    "Palmerston North",
+    "Feilding",
+    "Whanganui",
+    "New Plymouth",
+    "Hawera",
+    "Stratford",
+    "Ohakune",
+    "National Park",
+    "Tongariro",
+    "Wellington",
+    "Lower Hutt",
+    "Upper Hutt",
+    "Porirua",
+    "Kapiti Coast",
+    "Paraparaumu",
+    "Waikanae",
+    "Levin",
+    "Masterton",
+    "Carterton",
+    "Greytown",
+    "Martinborough",
+    "Wairarapa",
+    "Paeroa",
+    "Karangahake",
+    "Thames",
+    "Coromandel",
+    "Whitianga",
+    "Hahei",
+    "Tairua",
+    "Whangamata",
+    "Kerikeri",
+    "Paihia",
+    "Russell",
+    "Kaitaia",
+    "Whangarei",
+    "Dargaville",
+    "Northland",
   ];
 
   const SOUTH_ISLAND_CITIES = [
-    "Arrowtown",
-    "Christchurch",
-    "Cromwell",
-    "Lyttelton",
-    "Milford Sound",
-    "Mt.Cook",
-    "Queenstown",
-    "Tekapo",
-    "Twizel",
-    "Wanaka",
-    "West Coast",
-    "Blenheim",
-    "Otago",
-    "Methven",
-    "Hanmer Springs",
-    "Bluff",
-    "Dunedin",
-    "Oamaru",
+    "Nelson",
+    "Richmond",
+    "Motueka",
     "Tasman",
-    "Kapiti Coast",
+    "Takaka",
+    "Golden Bay",
+    "Blenheim",
+    "Picton",
+    "Kaikoura",
+    "Hanmer Springs",
+    "Christchurch",
+    "Lyttelton",
+    "Akaroa",
+    "Rangiora",
+    "Kaiapoi",
+    "Rolleston",
+    "Ashburton",
+    "Methven",
+    "Timaru",
+    "Geraldine",
+    "Tekapo",
+    "Lake Tekapo",
+    "Twizel",
+    "Mt Cook",
+    "Mt.Cook",
+    "Aoraki",
+    "Oamaru",
+    "Dunedin",
+    "Mosgiel",
+    "Balclutha",
+    "Invercargill",
+    "Bluff",
+    "Te Anau",
     "Te A Nau",
+    "Milford Sound",
+    "Queenstown",
+    "Arrowtown",
+    "Cromwell",
+    "Alexandra",
+    "Wanaka",
+    "Cardrona",
+    "Haast",
+    "Fox Glacier",
+    "Franz Josef",
+    "Hokitika",
+    "Greymouth",
+    "Westport",
+    "West Coast",
+    "Marlborough",
+    "Canterbury",
+    "Otago",
+    "Southland",
   ];
 
   const cities = Array.from(
@@ -296,6 +373,13 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
       selectedCities.length === 0 ||
       (place.city !== null && selectedCities.includes(place.city));
 
+    const matchesIsland =
+      selectedIsland === "all" ||
+      (place.city !== null &&
+        (selectedIsland === "north"
+          ? NORTH_ISLAND_CITIES.includes(place.city)
+          : SOUTH_ISLAND_CITIES.includes(place.city)));
+
     const matchesStatus =
       place.itemType === "event"
         ? true
@@ -325,7 +409,8 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
       matchesStatus &&
       matchesMonth &&
       matchesSearch &&
-      matchesTags
+      matchesTags &&
+      matchesIsland
     );
   });
 
@@ -495,7 +580,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
               className="h-4 w-4 rounded border-zinc-300"
             />
 
-            <span>👶 Baby</span>
+            <span>👶 with Baby</span>
           </label>
         </div>
 
@@ -539,9 +624,6 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                 item.itemType === "place",
             )}
             selectedPlaceId={selectedPlaceId}
-            selectedCity={
-              selectedCities.length === 1 ? selectedCities[0] : "all"
-            }
           />
         </section>
       </div>
@@ -608,6 +690,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                     {place.itemType === "event" ? (
                       <p className="mt-1 text-sm text-zinc-500">
                         {place.start_date}
+
                         {place.end_date && place.end_date !== place.start_date
                           ? ` ~ ${place.end_date}`
                           : ""}
@@ -616,6 +699,10 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                           <span className="ml-2">
                             · 매년 {place.event_month}월
                           </span>
+                        )}
+
+                        {place.tags?.includes("Baby") && (
+                          <span className="ml-2">· 👶</span>
                         )}
                       </p>
                     ) : place.status === "visited" ? (
@@ -626,9 +713,17 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                             · {getRatingLabel(place.rating)}
                           </span>
                         )}
+                        {place.tags?.includes("Baby") && (
+                          <span className="ml-2">· 👶</span>
+                        )}
                       </p>
                     ) : place.status === "wishlist" ? (
-                      <p className="mt-1 text-sm text-zinc-500">🟡 Wishlist</p>
+                      <p className="mt-1 text-sm text-zinc-500">
+                        🟡 Wishlist
+                        {place.tags?.includes("Baby") && (
+                          <span className="ml-2">· 👶</span>
+                        )}
+                      </p>
                     ) : null}
                   </div>
 
