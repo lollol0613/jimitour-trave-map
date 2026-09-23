@@ -9,23 +9,28 @@ import { getRatingLabel } from "@/lib/rating";
 
 const AUCKLAND_CENTER: [number, number] = [174.7633, -36.8485];
 
-type MapPlace = Pick<
-  Place,
-  | "id"
-  | "name"
-  | "category"
-  | "status"
-  | "latitude"
-  | "longitude"
-  | "address"
-  | "rating"
-  | "memo"
-  | "image_url"
-  | "city"
-  | "tags"
->;
+type MapPlace = {
+  id: string;
+  name: string;
+  category: Place["category"] | "event";
+  status: Place["status"] | null;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  city: string | null;
+  rating: number | null;
+  memo: string | null;
+  image_url: string | null;
+  tags: string[] | null;
 
-function getCategoryLabel(category: Place["category"]) {
+  itemType: "place" | "event";
+
+  start_date: string | null;
+  end_date: string | null;
+  event_month: number | null;
+};
+
+function getCategoryLabel(category: MapPlace["category"]) {
   switch (category) {
     case "accommodation":
       return "🏨 숙박";
@@ -37,12 +42,14 @@ function getCategoryLabel(category: Place["category"]) {
       return "☕ 카페";
     case "shopping":
       return "🛒 쇼핑";
+    case "event":
+      return "🎆 이벤트";
     default:
       return "📌 기타";
   }
 }
 
-function getCategoryIcon(category: Place["category"]) {
+function getCategoryIcon(category: MapPlace["category"]) {
   switch (category) {
     case "accommodation":
       return "🏨";
@@ -54,6 +61,8 @@ function getCategoryIcon(category: Place["category"]) {
       return "☕";
     case "shopping":
       return "🛒";
+    case "event":
+      return "🎆 이벤트";
     default:
       return "📌";
   }
@@ -207,7 +216,10 @@ export default function TravelMap({ places, selectedPlaceId }: TravelMapProps) {
     const markers = places
       .filter(
         (place) =>
-          Number.isFinite(place.longitude) && Number.isFinite(place.latitude),
+          place.longitude !== null &&
+          place.latitude !== null &&
+          Number.isFinite(Number(place.longitude)) &&
+          Number.isFinite(Number(place.latitude)),
       )
       .map((place) => {
         const popup = new maplibregl.Popup({
@@ -224,7 +236,7 @@ export default function TravelMap({ places, selectedPlaceId }: TravelMapProps) {
         const marker = new maplibregl.Marker({
           element: markerElement,
         })
-          .setLngLat([place.longitude, place.latitude])
+          .setLngLat([Number(place.longitude), Number(place.latitude)])
           .setPopup(popup)
           .addTo(map);
 
