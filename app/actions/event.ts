@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import sharp from "sharp";
 
 export async function createEvent(formData: FormData) {
   const supabase = await createServerSupabaseClient();
@@ -14,6 +15,46 @@ export async function createEvent(formData: FormData) {
   const address = String(formData.get("address") || "").trim() || null;
   const websiteUrl = String(formData.get("website_url") || "").trim() || null;
   const imageUrl = String(formData.get("image_url") || "").trim() || null;
+
+  const imageFile = formData.get("image_file");
+
+  let finalImageUrl = imageUrl || null;
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const inputBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+    const webpBuffer = await sharp(inputBuffer)
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 82,
+      })
+      .toBuffer();
+
+    const fileName = `${crypto.randomUUID()}.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("event-image")
+      .upload(fileName, webpBuffer, {
+        contentType: "image/webp",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(`이미지 업로드 실패: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("event-image")
+      .getPublicUrl(fileName);
+
+    finalImageUrl = publicUrlData.publicUrl;
+  }
+
   const memo = String(formData.get("memo") || "").trim() || null;
 
   const latitudeValue = String(formData.get("latitude") || "").trim();
@@ -34,7 +75,7 @@ export async function createEvent(formData: FormData) {
     latitude,
     longitude,
     website_url: websiteUrl,
-    image_url: imageUrl,
+    image_url: finalImageUrl,
     memo,
   });
 

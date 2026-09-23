@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import sharp from "sharp";
 
 function formatPlaceName(value: string) {
   return value
@@ -31,7 +32,45 @@ export async function createPlace(formData: FormData) {
   const longitude = Number(formData.get("longitude"));
   const ratingValue = formData.get("rating");
   const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const imageFile = formData.get("image_file");
+  const tags = formData.getAll("tags").map((value) => String(value));
 
+  let finalImageUrl = imageUrl || null;
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    const inputBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+    const webpBuffer = await sharp(inputBuffer)
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 82,
+      })
+      .toBuffer();
+
+    const fileName = `${crypto.randomUUID()}.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("place-image")
+      .upload(fileName, webpBuffer, {
+        contentType: "image/webp",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(`이미지 업로드 실패: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("place-image")
+      .getPublicUrl(fileName);
+
+    finalImageUrl = publicUrlData.publicUrl;
+  }
   const rating =
     ratingValue === null || String(ratingValue).trim() === ""
       ? null
@@ -63,13 +102,14 @@ export async function createPlace(formData: FormData) {
     name,
     category,
     status,
+    tags,
     address: address || null,
     city: city || null,
     rating,
     memo: memo || null,
     latitude,
     longitude,
-    image_url: imageUrl || null,
+    image_url: finalImageUrl,
   });
 
   if (insertError) {

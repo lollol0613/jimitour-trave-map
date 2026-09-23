@@ -25,6 +25,7 @@ type PlaceListItem = Pick<
   | "rating"
   | "memo"
   | "image_url"
+  | "tags"
 >;
 
 type EventListItem = {
@@ -40,6 +41,7 @@ type EventListItem = {
   longitude: number | null;
   image_url: string | null;
   memo: string | null;
+  tags: string[] | null;
 };
 
 type FilterCategory =
@@ -110,6 +112,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
     setSelectedCities([]);
     setSelectedCategories([]);
     setSelectedMonths([]);
+    setSelectedTags([]);
   }
 
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
@@ -144,11 +147,21 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
 
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
 
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   function toggleMonth(month: number) {
     setSelectedMonths((current) =>
       current.includes(month)
         ? current.filter((item) => item !== month)
         : [...current, month],
+    );
+  }
+
+  function toggleTag(tag: string) {
+    setSelectedTags((current) =>
+      current.includes(tag)
+        ? current.filter((item) => item !== tag)
+        : [...current, tag],
     );
   }
 
@@ -165,6 +178,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
     selectedStatuses,
     selectedMonths,
     searchQuery,
+    selectedTags,
   ]);
 
   const NORTH_ISLAND_CITIES = [
@@ -267,6 +281,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
       event_month: event.event_month,
       start_date: event.start_date,
       end_date: event.end_date,
+      tags: event.tags,
     })),
   ];
 
@@ -300,12 +315,17 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
       place.name.toLowerCase().includes(query) ||
       (place.city ?? "").toLowerCase().includes(query);
 
+    const matchesTags =
+      selectedTags.length === 0 ||
+      selectedTags.every((tag) => place.tags?.includes(tag));
+
     return (
       matchesCategory &&
       matchesCity &&
       matchesStatus &&
       matchesMonth &&
-      matchesSearch
+      matchesSearch &&
+      matchesTags
     );
   });
 
@@ -462,6 +482,21 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
                 );
               })}
           </div>
+        </div>
+
+        <div className="border-b border-zinc-200 py-5">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900">태그</h3>
+
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={selectedTags.includes("Baby")}
+              onChange={() => toggleTag("Baby")}
+              className="h-4 w-4 rounded border-zinc-300"
+            />
+
+            <span>👶 Baby</span>
+          </label>
         </div>
 
         {/* 이벤트 월 */}

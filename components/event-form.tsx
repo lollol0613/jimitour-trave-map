@@ -116,12 +116,25 @@ export default function EventForm() {
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Image URL</label>
+        <label className="mb-2 block text-sm font-medium">이미지 업로드</label>
+
         <input
-          name="image_url"
-          type="url"
-          className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+          name="image_file"
+          type="file"
+          accept="image/*"
+          className="block w-full text-sm text-zinc-600
+      file:mr-4
+      file:rounded-md
+      file:border-0
+      file:bg-zinc-100
+      file:px-4
+      file:py-2
+      file:text-sm
+      file:font-medium
+      hover:file:bg-zinc-200"
         />
+
+        <p className="mt-1 text-xs text-zinc-500">URL or 업로드 가능</p>
       </div>
 
       <div>

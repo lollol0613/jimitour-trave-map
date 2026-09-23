@@ -27,7 +27,7 @@ export default function PlaceForm() {
           <option value="restaurant">🍴 맛집</option>
           <option value="attraction">📍 가볼 곳</option>
           <option value="cafe">☕ 카페</option>
-          <option value="shopping">🛍 쇼핑</option>
+          <option value="shopping">🛒 쇼핑</option>
           <option value="other">📌 기타</option>
         </select>
       </div>
@@ -52,6 +52,21 @@ export default function PlaceForm() {
           <option value="wishlist">🟡 가보고 싶은 곳</option>
           <option value="visited">🟢 다녀온 곳</option>
         </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">태그</label>
+
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
+          <input
+            type="checkbox"
+            name="tags"
+            value="Baby"
+            className="h-4 w-4 rounded border-zinc-300"
+          />
+
+          <span>Baby</span>
+        </label>
       </div>
 
       <div>
@@ -108,11 +123,32 @@ export default function PlaceForm() {
 
       <div>
         <label className="mb-2 block text-sm font-medium">이미지 URL</label>
+
         <input
-          type="url"
           name="image_url"
+          type="url"
           placeholder="https://..."
           className="w-full rounded-lg border border-zinc-300 px-3 py-2"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">이미지 업로드</label>
+
+        <input
+          name="image_file"
+          type="file"
+          accept="image/*"
+          className="block w-full text-sm text-zinc-600
+      file:mr-4
+      file:rounded-md
+      file:border-0
+      file:bg-zinc-100
+      file:px-4
+      file:py-2
+      file:text-sm
+      file:font-medium
+      hover:file:bg-zinc-200"
         />
       </div>
 
