@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import AdminOnly from "@/components/admin-only";
 
 type EventItem = {
   id: string;
@@ -75,8 +77,17 @@ export default function EventBrowser({ events }: EventBrowserProps) {
           {filteredEvents.map((event) => (
             <article
               key={event.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+              className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
             >
+              <AdminOnly>
+                <Link
+                  href={`/events/${event.id}/edit`}
+                  className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                >
+                  <span>✏️</span>
+                  <span>Edit</span>
+                </Link>
+              </AdminOnly>
               <div className="flex gap-4">
                 {event.image_url && (
                   <img

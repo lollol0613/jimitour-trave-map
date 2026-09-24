@@ -122,6 +122,14 @@ export default async function EventDetailPage({
               )}
             </div>
 
+            {event.tags?.includes("Baby") && (
+              <div className="mt-3">
+                <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                  👶 Baby
+                </span>
+              </div>
+            )}
+
             <div className="mt-6 flex flex-wrap gap-2">
               <a
                 href={getGoogleMapsSearchUrl(

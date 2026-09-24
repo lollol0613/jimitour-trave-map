@@ -77,6 +77,23 @@ export default function EventForm() {
       </div>
 
       <div>
+        <label className="mb-2 block text-sm font-medium">태그</label>
+
+        <div className="space-y-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              name="tags"
+              value="Baby"
+              className="h-4 w-4 rounded border-zinc-300"
+            />
+
+            <span>👶 Baby</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
         <label className="mb-2 block text-sm font-medium">주소</label>
         <input
           name="address"

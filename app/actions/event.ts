@@ -16,6 +16,8 @@ export async function createEvent(formData: FormData) {
   const websiteUrl = String(formData.get("website_url") || "").trim() || null;
   const imageUrl = String(formData.get("image_url") || "").trim() || null;
 
+  const tags = formData.getAll("tags").map((value) => String(value));
+
   const imageFile = formData.get("image_file");
 
   let finalImageUrl = imageUrl || null;
@@ -77,6 +79,7 @@ export async function createEvent(formData: FormData) {
     website_url: websiteUrl,
     image_url: finalImageUrl,
     memo,
+    tags,
   });
 
   if (error) {

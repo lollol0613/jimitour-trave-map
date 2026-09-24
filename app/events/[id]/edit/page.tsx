@@ -97,7 +97,7 @@ async function updateEvent(eventId: string, formData: FormData) {
     throw new Error(error.message);
   }
 
-  redirect(`/events/${eventId}`);
+  redirect("/events");
 }
 
 export default async function EditEventPage({ params }: EditEventPageProps) {
@@ -117,10 +117,10 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-950">
       <section className="mx-auto max-w-2xl">
         <Link
-          href={`/events/${event.id}`}
+          href="/events"
           className="mb-6 inline-flex text-sm font-medium text-blue-600 hover:text-blue-700"
         >
-          ← 이벤트로 돌아가기
+          ← 이벤트 목록으로 돌아가기
         </Link>
 
         <h1 className="mb-6 text-3xl font-bold">이벤트 수정</h1>

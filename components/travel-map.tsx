@@ -62,7 +62,7 @@ function getCategoryIcon(category: MapPlace["category"]) {
     case "shopping":
       return "🛒";
     case "event":
-      return "🎆 이벤트";
+      return "🎆";
     default:
       return "📌";
   }

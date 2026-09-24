@@ -482,8 +482,8 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
           <div className="space-y-2.5">
             {[
               { value: "all", label: "All" },
-              { value: "north", label: "North Island" },
-              { value: "south", label: "South Island" },
+              { value: "north", label: "North Island(북섬)" },
+              { value: "south", label: "South Island(남섬)" },
             ].map((island) => {
               const checked = selectedIsland === island.value;
 
@@ -619,10 +619,7 @@ export default function PlaceBrowser({ places, events }: PlaceBrowserProps) {
       <div className="min-w-0">
         <section aria-labelledby="map-heading">
           <TravelMap
-            places={filteredPlaces.filter(
-              (item): item is typeof item & { itemType: "place" } =>
-                item.itemType === "place",
-            )}
+            places={filteredPlaces}
             selectedPlaceId={selectedPlaceId}
           />
         </section>
